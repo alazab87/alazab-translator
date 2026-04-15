@@ -466,13 +466,6 @@
       const text = inputText.value.trim();
       if (!text) return;
 
-      const apiKey = getKey();
-      if (!apiKey) {
-        setOutput("⚠ Please enter your Anthropic API key above.", false, false);
-        setStatus("error");
-        return;
-      }
-
       if (abortController) abortController.abort();
       abortController = new AbortController();
 
