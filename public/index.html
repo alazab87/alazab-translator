@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alazab Translator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d2e;
+      --surface2: #252840;
+      --border: #2e3155;
+      --accent: #6c63ff;
+      --accent2: #a78bfa;
+      --text: #e8e8f0;
+      --text-muted: #7c7d99;
+      --success: #34d399;
+      --danger: #f87171;
+      --glow: rgba(108, 99, 255, 0.15);
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      padding: 1.6rem 1rem 1rem;
+      background: linear-gradient(180deg, rgba(108,99,255,0.08) 0%, transparent 100%);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1.9rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+    .logo-icon { font-size: 2rem; -webkit-text-fill-color: initial; }
+    .tagline { color: var(--text-muted); font-size: 0.82rem; margin-top: 0.3rem; letter-spacing: 0.5px; }
+
+    /* ── Main ── */
+    main {
+      flex: 1;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.4rem 1rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* ── Language bar ── */
+    .lang-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+    .lang-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 2rem;
+      padding: 0.5rem 1.2rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent2);
+      background: rgba(108,99,255,0.1);
+      min-width: 140px;
+      justify-content: center;
+    }
+    .flag { font-size: 1.25rem; }
+    .swap-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 2.6rem;
+      height: 2.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--accent2);
+      font-size: 1.1rem;
+      transition: all 0.25s;
+      flex-shrink: 0;
+    }
+    .swap-btn:hover {
+      background: rgba(108,99,255,0.2);
+      border-color: var(--accent);
+      transform: rotate(180deg);
+    }
+
+    /* ── Panels ── */
+    .panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 650px) { .panels { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .panel:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--glow);
+    }
+    .panel.output-panel { background: var(--surface2); }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .panel-header span { color: var(--accent2); }
+    .panel-actions { display: flex; gap: 0.4rem; }
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 1rem;
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.4rem;
+      transition: all 0.15s;
+      line-height: 1;
+    }
+    .icon-btn:hover { color: var(--text); background: var(--border); }
+    .icon-btn.copied { color: var(--success); }
+
+    textarea {
+      flex: 1;
+      background: transparent;
+      border: none;
+      resize: none;
+      color: var(--text);
+      font-size: 1.05rem;
+      line-height: 1.65;
+      padding: 1rem;
+      min-height: 200px;
+      outline: none;
+      font-family: inherit;
+    }
+    textarea::placeholder { color: var(--text-muted); }
+
+    .output-text {
+      flex: 1;
+      padding: 1rem;
+      font-size: 1.05rem;
+      line-height: 1.65;
+      min-height: 200px;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .output-text.placeholder { color: var(--text-muted); font-style: italic; }
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.1em;
+      background: var(--accent);
+      vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+      margin-left: 1px;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── Status bar ── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 1rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .status-indicator { display: flex; align-items: center; gap: 0.4rem; }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--text-muted); transition: background 0.2s;
+    }
+    .dot.translating { background: var(--accent); animation: pulse 1s ease-in-out infinite; }
+    .dot.done { background: var(--success); }
+    .dot.error { background: var(--danger); }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+    /* ── Quick phrases ── */
+    .quick-bar {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .quick-label { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
+    .quick-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 0.3rem 0.85rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .quick-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent2);
+      background: rgba(108,99,255,0.1);
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 0.8rem;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+    }
+    footer strong { color: var(--accent2); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo"><span class="logo-icon">🌐</span> Alazab Translator</div>
+    <p class="tagline">Smart · Direct · Accurate · Instant</p>
+  </header>
+
+  <main>
+    <!-- Language selector -->
+    <div class="lang-bar">
+      <div class="lang-badge">
+        <span class="flag" id="srcFlag">🇺🇸</span>
+        <span id="srcLabel">English</span>
+      </div>
+      <button class="swap-btn" id="swapBtn" title="Swap languages">⇄</button>
+      <div class="lang-badge">
+        <span class="flag" id="tgtFlag">🇪🇸</span>
+        <span id="tgtLabel">Spanish</span>
+      </div>
+    </div>
+
+    <!-- Translation panels -->
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-header">
+          <span id="inputLangLabel">English</span>
+          <div class="panel-actions">
+            <button class="icon-btn" id="clearBtn" title="Clear">✕</button>
+          </div>
+        </div>
+        <textarea id="inputText" placeholder="Type English here…" spellcheck="true" autofocus></textarea>
+        <div class="status-bar">
+          <div class="status-indicator">
+            <div class="dot" id="dot"></div>
+            <span id="statusText">Ready</span>
+          </div>
+          <span id="charCount">0 chars</span>
+        </div>
+      </div>
+
+      <div class="panel output-panel">
+        <div class="panel-header">
+          <span id="outputLangLabel">Spanish</span>
+          <div class="panel-actions">
+            <button class="icon-btn" id="copyBtn" title="Copy">⧉</button>
+            <button class="icon-btn" id="speakBtn" title="Listen">🔊</button>
+          </div>
+        </div>
+        <div class="output-text placeholder" id="outputText">Translation will appear here…</div>
+        <div class="status-bar">
+          <span></span>
+          <span id="outCharCount">0 chars</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick phrases -->
+    <div class="quick-bar">
+      <span class="quick-label">Try:</span>
+      <span class="quick-chip" data-text="Hello, how are you?">Hello, how are you?</span>
+      <span class="quick-chip" data-text="¿Dónde está el baño?">¿Dónde está el baño?</span>
+      <span class="quick-chip" data-text="I would like a table for two, please.">Table for two</span>
+      <span class="quick-chip" data-text="Me llamo Alazab y soy tu amigo.">Me llamo Alazab</span>
+      <span class="quick-chip" data-text="What time does the store close?">Store closing time</span>
+      <span class="quick-chip" data-text="No entiendo lo que dices.">No entiendo</span>
+    </div>
+  </main>
+
+  <footer>
+    Powered by <strong>Claude AI (Haiku)</strong> · Alazab Translator © 2025
+  </footer>
+
+  <script>
+
+    // ── State ──
+    let direction = "en-es";
+    let debounceTimer = null;
+    let abortController = null;
+
+    const langs = {
+      en: { label: "English", flag: "🇺🇸" },
+      es: { label: "Spanish", flag: "🇪🇸" },
+    };
+
+    // ── Elements ──
+    const inputText   = document.getElementById("inputText");
+    const outputText  = document.getElementById("outputText");
+    const dot         = document.getElementById("dot");
+    const statusText  = document.getElementById("statusText");
+    const charCount   = document.getElementById("charCount");
+    const outCharCount= document.getElementById("outCharCount");
+
+    // ── UI helpers ──
+    function updateLangUI() {
+      const [s, t] = direction === "en-es" ? ["en","es"] : ["es","en"];
+      document.getElementById("srcFlag").textContent  = langs[s].flag;
+      document.getElementById("srcLabel").textContent = langs[s].label;
+      document.getElementById("tgtFlag").textContent  = langs[t].flag;
+      document.getElementById("tgtLabel").textContent = langs[t].label;
+      document.getElementById("inputLangLabel").textContent  = langs[s].label;
+      document.getElementById("outputLangLabel").textContent = langs[t].label;
+      inputText.placeholder = `Type ${langs[s].label} here…`;
+    }
+
+    function setStatus(state) {
+      const msgs = { ready:"Ready", waiting:"Waiting…", translating:"Translating…", done:"Done", error:"Error" };
+      dot.className = "dot" + (state === "translating" || state === "waiting" ? " translating" : state === "done" ? " done" : state === "error" ? " error" : "");
+      statusText.textContent = msgs[state] || state;
+    }
+
+    function setOutput(text, isPlaceholder, showCursor) {
+      outputText.innerHTML = "";
+      if (isPlaceholder || !text) {
+        outputText.className = "output-text placeholder";
+        outputText.textContent = "Translation will appear here…";
+        return;
+      }
+      outputText.className = "output-text";
+      outputText.appendChild(document.createTextNode(text));
+      if (showCursor) {
+        const c = document.createElement("span");
+        c.className = "cursor";
+        outputText.appendChild(c);
+      }
+    }
+
+    function getOutputText() {
+      if (outputText.classList.contains("placeholder")) return "";
+      return Array.from(outputText.childNodes)
+        .filter(n => n.nodeType === 3)
+        .map(n => n.textContent)
+        .join("");
+    }
+
+    // ── Swap ──
+    document.getElementById("swapBtn").addEventListener("click", () => {
+      const prev = getOutputText();
+      direction = direction === "en-es" ? "es-en" : "en-es";
+      updateLangUI();
+      if (prev) {
+        inputText.value = prev;
+        updateCharCount();
+        triggerTranslation();
+      } else {
+        setOutput("", true);
+      }
+    });
+
+    // ── Clear ──
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      inputText.value = "";
+      setOutput("", true);
+      setStatus("ready");
+      charCount.textContent = "0 chars";
+      outCharCount.textContent = "0 chars";
+      if (abortController) abortController.abort();
+    });
+
+    // ── Copy ──
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      const t = getOutputText();
+      if (!t) return;
+      await navigator.clipboard.writeText(t).catch(() => {});
+      const btn = document.getElementById("copyBtn");
+      btn.textContent = "✓"; btn.classList.add("copied");
+      setTimeout(() => { btn.textContent = "⧉"; btn.classList.remove("copied"); }, 1500);
+    });
+
+    // ── Speak ──
+    document.getElementById("speakBtn").addEventListener("click", () => {
+      const t = getOutputText();
+      if (!t || !window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(t);
+      u.lang = direction === "en-es" ? "es-ES" : "en-US";
+      u.rate = 0.95;
+      window.speechSynthesis.speak(u);
+    });
+
+    // ── Quick chips ──
+    document.querySelectorAll(".quick-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        const text = chip.dataset.text;
+        direction = /[áéíóúñü¿¡]/i.test(text) ? "es-en" : "en-es";
+        updateLangUI();
+        inputText.value = text;
+        updateCharCount();
+        triggerTranslation();
+      });
+    });
+
+    // ── Input ──
+    function updateCharCount() {
+      charCount.textContent = `${inputText.value.length} chars`;
+    }
+
+    inputText.addEventListener("input", () => {
+      updateCharCount();
+      if (!inputText.value.trim()) {
+        setOutput("", true); setStatus("ready");
+        if (abortController) abortController.abort();
+        return;
+      }
+      setStatus("waiting");
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(triggerTranslation, 900);
+    });
+
+    // ── Translation (direct Claude API with SSE streaming) ──
+    async function triggerTranslation() {
+      const text = inputText.value.trim();
+      if (!text) return;
+
+      const apiKey = getKey();
+      if (!apiKey) {
+        setOutput("⚠ Please enter your Anthropic API key above.", false, false);
+        setStatus("error");
+        return;
+      }
+
+      if (abortController) abortController.abort();
+      abortController = new AbortController();
+
+      const [srcLang, tgtLang] = direction === "en-es"
+        ? ["English", "Spanish"]
+        : ["Spanish", "English"];
+
+      setStatus("translating");
+      setOutput("", false, true);
+
+      try {
+        const res = await fetch("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, direction }),
+          signal: abortController.signal,
+        });
+
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok || json.error) {
+          const msg = json.error || `HTTP ${res.status}`;
+          if (msg.includes("401") || msg.includes("auth") || msg.includes("API key")) {
+            setOutput("⚠ Invalid API key. Please check your key.", false, false);
+          } else {
+            setOutput(`⚠ ${msg}`, false, false);
+          }
+          setStatus("error");
+          return;
+        }
+
+        setOutput(json.translation, false, false);
+        outCharCount.textContent = `${json.translation.length} chars`;
+        setStatus("done");
+
+      } catch (err) {
+        if (err.name === "AbortError") return;
+        console.error(err);
+        setOutput(
+          "⚠ Cannot reach the API from here.\n\n" +
+          "Please open the app using start.bat instead of the preview panel:\n" +
+          "1. Open: C:\\Users\\alaza\\Claode folder\\\n" +
+          "2. Double-click: start.bat\n" +
+          "3. Browser opens at http://localhost:3000",
+          false, false
+        );
+        setStatus("error");
+      }
+    }
+
+    // ── Init ──
+    updateLangUI();
+  </script>
+</body>
+</html>
