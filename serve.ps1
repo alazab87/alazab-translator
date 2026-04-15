@@ -43,12 +43,8 @@ try {
                 $bodyRaw = $reader.ReadToEnd()
                 $data    = $bodyRaw | ConvertFrom-Json
 
-                $srcLang = "English"
-                $tgtLang = "Spanish"
-                if ($data.direction -ne "en-es") {
-                    $srcLang = "Spanish"
-                    $tgtLang = "English"
-                }
+                $srcLang = if ($data.srcLang) { $data.srcLang } else { "English" }
+                $tgtLang = if ($data.tgtLang) { $data.tgtLang } else { "Spanish" }
 
                 $sysPrompt = "You are Alazab Translator. Translate from $srcLang to $tgtLang. Output ONLY the translation, no explanations, no alternatives, no notes. Preserve tone, formality, idioms, and punctuation."
 

@@ -30,7 +30,6 @@
       flex-direction: column;
     }
 
-
     /* ── Header ── */
     header {
       text-align: center;
@@ -73,21 +72,58 @@
       gap: 0.75rem;
     }
     .lang-badge {
+      position: relative;
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      background: var(--surface);
+      background: rgba(108,99,255,0.1);
       border: 1px solid var(--accent);
       border-radius: 2rem;
       padding: 0.5rem 1.2rem;
       font-size: 0.9rem;
       font-weight: 600;
       color: var(--accent2);
-      background: rgba(108,99,255,0.1);
-      min-width: 140px;
+      min-width: 165px;
       justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
     }
-    .flag { font-size: 1.25rem; }
+    .lang-badge:hover { background: rgba(108,99,255,0.2); }
+    .chevron { font-size: 0.65rem; opacity: 0.7; }
+    .flag { font-size: 1.2rem; }
+
+    .lang-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 0.85rem;
+      padding: 0.4rem;
+      z-index: 200;
+      min-width: 180px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.55);
+    }
+    .lang-dropdown.open { display: block; }
+    .lang-option {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.48rem 0.75rem;
+      border-radius: 0.55rem;
+      cursor: pointer;
+      font-size: 0.86rem;
+      color: var(--text);
+      font-weight: 500;
+      transition: background 0.12s;
+      white-space: nowrap;
+    }
+    .lang-option:hover { background: rgba(108,99,255,0.2); color: var(--accent2); }
+    .lang-option.active { color: var(--accent2); background: rgba(108,99,255,0.13); font-weight: 600; }
+
     .swap-btn {
       background: var(--surface2);
       border: 1px solid var(--border);
@@ -159,6 +195,7 @@
     }
     .icon-btn:hover { color: var(--text); background: var(--border); }
     .icon-btn.copied { color: var(--success); }
+    .icon-btn.speaking { color: var(--accent); }
 
     textarea {
       flex: 1;
@@ -242,6 +279,78 @@
       background: rgba(108,99,255,0.1);
     }
 
+    /* ── History ── */
+    .history-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      overflow: hidden;
+    }
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .history-clear-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      padding: 0.2rem 0.6rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .history-clear-btn:hover { border-color: var(--danger); color: var(--danger); }
+    .history-list {
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .history-list::-webkit-scrollbar { width: 5px; }
+    .history-list::-webkit-scrollbar-track { background: transparent; }
+    .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .history-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 0.6rem;
+      padding: 0.6rem 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .history-item:hover { border-color: var(--accent); background: rgba(108,99,255,0.08); }
+    .history-langs {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+    .history-src {
+      font-size: 0.85rem;
+      color: var(--text);
+      margin-bottom: 0.18rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .history-tgt {
+      font-size: 0.85rem;
+      color: var(--accent2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     /* ── Footer ── */
     footer {
       text-align: center;
@@ -263,14 +372,18 @@
   <main>
     <!-- Language selector -->
     <div class="lang-bar">
-      <div class="lang-badge">
+      <div class="lang-badge" id="srcBadge">
         <span class="flag" id="srcFlag">🇺🇸</span>
         <span id="srcLabel">English</span>
+        <span class="chevron">▾</span>
+        <div class="lang-dropdown" id="srcDropdown"></div>
       </div>
       <button class="swap-btn" id="swapBtn" title="Swap languages">⇄</button>
-      <div class="lang-badge">
+      <div class="lang-badge" id="tgtBadge">
         <span class="flag" id="tgtFlag">🇪🇸</span>
         <span id="tgtLabel">Spanish</span>
+        <span class="chevron">▾</span>
+        <div class="lang-dropdown" id="tgtDropdown"></div>
       </div>
     </div>
 
@@ -283,7 +396,7 @@
             <button class="icon-btn" id="clearBtn" title="Clear">✕</button>
           </div>
         </div>
-        <textarea id="inputText" placeholder="Type English here…" spellcheck="true" autofocus></textarea>
+        <textarea id="inputText" placeholder="Type here…" spellcheck="true" autofocus></textarea>
         <div class="status-bar">
           <div class="status-indicator">
             <div class="dot" id="dot"></div>
@@ -313,58 +426,133 @@
     <div class="quick-bar">
       <span class="quick-label">Try:</span>
       <span class="quick-chip" data-text="Hello, how are you?">Hello, how are you?</span>
-      <span class="quick-chip" data-text="¿Dónde está el baño?">¿Dónde está el baño?</span>
+      <span class="quick-chip" data-text="Where is the bathroom?">Where is bathroom?</span>
       <span class="quick-chip" data-text="I would like a table for two, please.">Table for two</span>
-      <span class="quick-chip" data-text="Me llamo Alazab y soy tu amigo.">Me llamo Alazab</span>
+      <span class="quick-chip" data-text="How much does this cost?">How much?</span>
       <span class="quick-chip" data-text="What time does the store close?">Store closing time</span>
-      <span class="quick-chip" data-text="No entiendo lo que dices.">No entiendo</span>
+      <span class="quick-chip" data-text="I don't understand.">I don't understand</span>
+    </div>
+
+    <!-- Translation History -->
+    <div class="history-section" id="historySection" style="display:none">
+      <div class="history-header">
+        <span>🕐 Recent Translations</span>
+        <button class="history-clear-btn" id="historyClearBtn">Clear history</button>
+      </div>
+      <div class="history-list" id="historyList"></div>
     </div>
   </main>
 
   <footer>
-    Powered by <strong>Claude AI (Haiku)</strong> · Alazab Translator © 2025
+    Powered by <strong>Claude AI</strong> · Alazab Translator © 2025
   </footer>
 
   <script>
 
-    // ── State ──
-    let direction = "en-es";
-    let debounceTimer = null;
-    let abortController = null;
-
+    // ── Languages ──
     const langs = {
-      en: { label: "English", flag: "🇺🇸" },
-      es: { label: "Spanish", flag: "🇪🇸" },
+      en: { label: "English",    flag: "🇺🇸", speech: "en-US" },
+      es: { label: "Spanish",    flag: "🇪🇸", speech: "es-ES" },
+      fr: { label: "French",     flag: "🇫🇷", speech: "fr-FR" },
+      ar: { label: "Arabic",     flag: "🇸🇦", speech: "ar-SA" },
+      de: { label: "German",     flag: "🇩🇪", speech: "de-DE" },
+      it: { label: "Italian",    flag: "🇮🇹", speech: "it-IT" },
+      pt: { label: "Portuguese", flag: "🇧🇷", speech: "pt-BR" },
+      zh: { label: "Chinese",    flag: "🇨🇳", speech: "zh-CN" },
+      ja: { label: "Japanese",   flag: "🇯🇵", speech: "ja-JP" },
     };
 
+    // ── State ──
+    let srcLang = "en";
+    let tgtLang = "es";
+    let debounceTimer = null;
+    let abortController = null;
+    let openDropdown = null;
+    let translHistory = JSON.parse(localStorage.getItem("alazabHistory") || "[]");
+
     // ── Elements ──
-    const inputText   = document.getElementById("inputText");
-    const outputText  = document.getElementById("outputText");
-    const dot         = document.getElementById("dot");
-    const statusText  = document.getElementById("statusText");
-    const charCount   = document.getElementById("charCount");
-    const outCharCount= document.getElementById("outCharCount");
+    const inputText    = document.getElementById("inputText");
+    const outputText   = document.getElementById("outputText");
+    const dot          = document.getElementById("dot");
+    const statusText   = document.getElementById("statusText");
+    const charCount    = document.getElementById("charCount");
+    const outCharCount = document.getElementById("outCharCount");
+    const speakBtn     = document.getElementById("speakBtn");
+
+    // ── Language dropdowns ──
+    function buildDropdowns() {
+      ["src", "tgt"].forEach(which => {
+        const dropdown = document.getElementById(which + "Dropdown");
+        const current = which === "src" ? srcLang : tgtLang;
+        dropdown.innerHTML = Object.entries(langs).map(([code, lang]) =>
+          `<div class="lang-option ${code === current ? "active" : ""}" data-which="${which}" data-code="${code}">
+            ${lang.flag} ${lang.label}
+          </div>`
+        ).join("");
+      });
+    }
+
+    function toggleLangDropdown(which) {
+      const dropdown = document.getElementById(which + "Dropdown");
+      if (openDropdown && openDropdown !== dropdown) {
+        openDropdown.classList.remove("open");
+      }
+      dropdown.classList.toggle("open");
+      openDropdown = dropdown.classList.contains("open") ? dropdown : null;
+    }
+
+    document.getElementById("srcBadge").addEventListener("click", (e) => {
+      if (!e.target.classList.contains("lang-option")) toggleLangDropdown("src");
+    });
+    document.getElementById("tgtBadge").addEventListener("click", (e) => {
+      if (!e.target.classList.contains("lang-option")) toggleLangDropdown("tgt");
+    });
+
+    document.addEventListener("click", (e) => {
+      if (e.target.classList.contains("lang-option")) {
+        const which = e.target.dataset.which;
+        const code  = e.target.dataset.code;
+        if (which === "src") {
+          if (code === tgtLang) tgtLang = srcLang;
+          srcLang = code;
+        } else {
+          if (code === srcLang) srcLang = tgtLang;
+          tgtLang = code;
+        }
+        if (openDropdown) { openDropdown.classList.remove("open"); openDropdown = null; }
+        updateLangUI();
+        buildDropdowns();
+        if (inputText.value.trim()) triggerTranslation();
+        return;
+      }
+      if (!e.target.closest(".lang-badge") && openDropdown) {
+        openDropdown.classList.remove("open");
+        openDropdown = null;
+      }
+    });
 
     // ── UI helpers ──
     function updateLangUI() {
-      const [s, t] = direction === "en-es" ? ["en","es"] : ["es","en"];
-      document.getElementById("srcFlag").textContent  = langs[s].flag;
-      document.getElementById("srcLabel").textContent = langs[s].label;
-      document.getElementById("tgtFlag").textContent  = langs[t].flag;
-      document.getElementById("tgtLabel").textContent = langs[t].label;
-      document.getElementById("inputLangLabel").textContent  = langs[s].label;
-      document.getElementById("outputLangLabel").textContent = langs[t].label;
-      inputText.placeholder = `Type ${langs[s].label} here…`;
+      document.getElementById("srcFlag").textContent         = langs[srcLang].flag;
+      document.getElementById("srcLabel").textContent        = langs[srcLang].label;
+      document.getElementById("tgtFlag").textContent         = langs[tgtLang].flag;
+      document.getElementById("tgtLabel").textContent        = langs[tgtLang].label;
+      document.getElementById("inputLangLabel").textContent  = langs[srcLang].label;
+      document.getElementById("outputLangLabel").textContent = langs[tgtLang].label;
+      inputText.placeholder = `Type ${langs[srcLang].label} here…`;
+      inputText.dir  = srcLang === "ar" ? "rtl" : "ltr";
+      outputText.dir = tgtLang === "ar" ? "rtl" : "ltr";
     }
 
     function setStatus(state) {
       const msgs = { ready:"Ready", waiting:"Waiting…", translating:"Translating…", done:"Done", error:"Error" };
-      dot.className = "dot" + (state === "translating" || state === "waiting" ? " translating" : state === "done" ? " done" : state === "error" ? " error" : "");
+      dot.className = "dot" + (["translating","waiting"].includes(state) ? " translating" : state === "done" ? " done" : state === "error" ? " error" : "");
       statusText.textContent = msgs[state] || state;
     }
 
     function setOutput(text, isPlaceholder, showCursor) {
       outputText.innerHTML = "";
+      outputText.dir = tgtLang === "ar" ? "rtl" : "ltr";
       if (isPlaceholder || !text) {
         outputText.className = "output-text placeholder";
         outputText.textContent = "Translation will appear here…";
@@ -390,8 +578,9 @@
     // ── Swap ──
     document.getElementById("swapBtn").addEventListener("click", () => {
       const prev = getOutputText();
-      direction = direction === "en-es" ? "es-en" : "en-es";
+      [srcLang, tgtLang] = [tgtLang, srcLang];
       updateLangUI();
+      buildDropdowns();
       if (prev) {
         inputText.value = prev;
         updateCharCount();
@@ -422,23 +611,28 @@
     });
 
     // ── Speak ──
-    document.getElementById("speakBtn").addEventListener("click", () => {
+    speakBtn.addEventListener("click", () => {
       const t = getOutputText();
       if (!t || !window.speechSynthesis) return;
-      window.speechSynthesis.cancel();
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        speakBtn.classList.remove("speaking");
+        return;
+      }
       const u = new SpeechSynthesisUtterance(t);
-      u.lang = direction === "en-es" ? "es-ES" : "en-US";
+      u.lang = langs[tgtLang].speech;
       u.rate = 0.95;
+      u.onend  = () => speakBtn.classList.remove("speaking");
+      u.onerror = () => speakBtn.classList.remove("speaking");
+      speakBtn.classList.add("speaking");
       window.speechSynthesis.speak(u);
     });
 
     // ── Quick chips ──
     document.querySelectorAll(".quick-chip").forEach(chip => {
       chip.addEventListener("click", () => {
-        const text = chip.dataset.text;
-        direction = /[áéíóúñü¿¡]/i.test(text) ? "es-en" : "en-es";
-        updateLangUI();
-        inputText.value = text;
+        if (srcLang !== "en") { srcLang = "en"; updateLangUI(); buildDropdowns(); }
+        inputText.value = chip.dataset.text;
         updateCharCount();
         triggerTranslation();
       });
@@ -461,17 +655,13 @@
       debounceTimer = setTimeout(triggerTranslation, 900);
     });
 
-    // ── Translation (direct Claude API with SSE streaming) ──
+    // ── Translation ──
     async function triggerTranslation() {
       const text = inputText.value.trim();
       if (!text) return;
 
       if (abortController) abortController.abort();
       abortController = new AbortController();
-
-      const [srcLang, tgtLang] = direction === "en-es"
-        ? ["English", "Spanish"]
-        : ["Spanish", "English"];
 
       setStatus("translating");
       setOutput("", false, true);
@@ -480,19 +670,18 @@
         const res = await fetch("/api/translate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text, direction }),
+          body: JSON.stringify({
+            text,
+            srcLang: langs[srcLang].label,
+            tgtLang: langs[tgtLang].label,
+          }),
           signal: abortController.signal,
         });
 
         const json = await res.json().catch(() => ({}));
 
         if (!res.ok || json.error) {
-          const msg = json.error || `HTTP ${res.status}`;
-          if (msg.includes("401") || msg.includes("auth") || msg.includes("API key")) {
-            setOutput("⚠ Invalid API key. Please check your key.", false, false);
-          } else {
-            setOutput(`⚠ ${msg}`, false, false);
-          }
+          setOutput(`⚠ ${json.error || "HTTP " + res.status}`, false, false);
           setStatus("error");
           return;
         }
@@ -500,24 +689,67 @@
         setOutput(json.translation, false, false);
         outCharCount.textContent = `${json.translation.length} chars`;
         setStatus("done");
+        addToHistory(text, json.translation);
 
       } catch (err) {
         if (err.name === "AbortError") return;
-        console.error(err);
-        setOutput(
-          "⚠ Cannot reach the API from here.\n\n" +
-          "Please open the app using start.bat instead of the preview panel:\n" +
-          "1. Open: C:\\Users\\alaza\\Claode folder\\\n" +
-          "2. Double-click: start.bat\n" +
-          "3. Browser opens at http://localhost:3000",
-          false, false
-        );
+        setOutput("⚠ Network error. Please try again.", false, false);
         setStatus("error");
       }
     }
 
+    // ── History ──
+    function addToHistory(srcText, tgtText) {
+      translHistory.unshift({ sl: srcLang, tl: tgtLang, src: srcText, tgt: tgtText });
+      if (translHistory.length > 20) translHistory.pop();
+      localStorage.setItem("alazabHistory", JSON.stringify(translHistory));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const section = document.getElementById("historySection");
+      const list    = document.getElementById("historyList");
+      if (!translHistory.length) { section.style.display = "none"; return; }
+      section.style.display = "block";
+      list.innerHTML = translHistory.map((h, i) => {
+        const sl = langs[h.sl] || { flag: "?", label: h.sl };
+        const tl = langs[h.tl] || { flag: "?", label: h.tl };
+        return `<div class="history-item" data-index="${i}">
+          <div class="history-langs">${sl.flag} ${sl.label} → ${tl.flag} ${tl.label}</div>
+          <div class="history-src">${escHtml(h.src)}</div>
+          <div class="history-tgt">${escHtml(h.tgt)}</div>
+        </div>`;
+      }).join("");
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+
+    document.getElementById("historyList").addEventListener("click", (e) => {
+      const item = e.target.closest(".history-item");
+      if (!item) return;
+      const h = translHistory[+item.dataset.index];
+      if (!h) return;
+      srcLang = h.sl; tgtLang = h.tl;
+      updateLangUI(); buildDropdowns();
+      inputText.value = h.src;
+      updateCharCount();
+      setOutput(h.tgt, false, false);
+      outCharCount.textContent = `${h.tgt.length} chars`;
+      setStatus("done");
+    });
+
+    document.getElementById("historyClearBtn").addEventListener("click", () => {
+      translHistory = [];
+      localStorage.removeItem("alazabHistory");
+      renderHistory();
+    });
+
     // ── Init ──
+    buildDropdowns();
     updateLangUI();
+    renderHistory();
   </script>
 </body>
 </html>

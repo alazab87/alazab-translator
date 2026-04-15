@@ -7,11 +7,8 @@ module.exports = async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).end();
 
-  const { text, direction } = req.body;
+  const { text, srcLang, tgtLang } = req.body;
   if (!text?.trim()) return res.status(400).json({ error: "No text provided" });
-
-  const srcLang = direction === "en-es" ? "English" : "Spanish";
-  const tgtLang = direction === "en-es" ? "Spanish" : "English";
 
   try {
     const response = await client.messages.create({
@@ -26,4 +23,4 @@ module.exports = async function handler(req, res) {
     const status = err.status || 500;
     res.status(status).json({ error: err.message });
   }
-}
+};
