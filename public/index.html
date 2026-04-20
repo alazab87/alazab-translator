@@ -104,7 +104,7 @@
       border-radius: 0.85rem;
       padding: 0.4rem;
       z-index: 200;
-      min-width: 180px;
+      min-width: 185px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.55);
     }
     .lang-dropdown.open { display: block; }
@@ -123,6 +123,7 @@
     }
     .lang-option:hover { background: rgba(108,99,255,0.2); color: var(--accent2); }
     .lang-option.active { color: var(--accent2); background: rgba(108,99,255,0.13); font-weight: 600; }
+    .lang-option.auto-option { border-bottom: 1px solid var(--border); margin-bottom: 0.3rem; padding-bottom: 0.6rem; }
 
     .swap-btn {
       background: var(--surface2);
@@ -139,11 +140,39 @@
       transition: all 0.25s;
       flex-shrink: 0;
     }
-    .swap-btn:hover {
-      background: rgba(108,99,255,0.2);
-      border-color: var(--accent);
-      transform: rotate(180deg);
+    .swap-btn:hover { background: rgba(108,99,255,0.2); border-color: var(--accent); transform: rotate(180deg); }
+
+    /* ── Formality bar ── */
+    .formality-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.7rem;
     }
+    .formality-label { font-size: 0.75rem; color: var(--text-muted); }
+    .formality-seg {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 2rem;
+      padding: 0.18rem;
+      gap: 0.1rem;
+    }
+    .formality-btn {
+      background: none;
+      border: none;
+      border-radius: 1.5rem;
+      padding: 0.28rem 0.9rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .formality-btn:hover { color: var(--text); }
+    .formality-btn.active { background: rgba(108,99,255,0.25); color: var(--accent2); font-weight: 600; }
 
     /* ── Panels ── */
     .panels {
@@ -162,10 +191,7 @@
       overflow: hidden;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .panel:focus-within {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--glow);
-    }
+    .panel:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
     .panel.output-panel { background: var(--surface2); }
 
     .panel-header {
@@ -196,6 +222,7 @@
     .icon-btn:hover { color: var(--text); background: var(--border); }
     .icon-btn.copied { color: var(--success); }
     .icon-btn.speaking { color: var(--accent); }
+    .icon-btn.listening { color: var(--danger); animation: pulse 1s ease-in-out infinite; }
 
     textarea {
       flex: 1;
@@ -245,14 +272,21 @@
       color: var(--text-muted);
     }
     .status-indicator { display: flex; align-items: center; gap: 0.4rem; }
-    .dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--text-muted); transition: background 0.2s;
-    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); transition: background 0.2s; }
     .dot.translating { background: var(--accent); animation: pulse 1s ease-in-out infinite; }
     .dot.done { background: var(--success); }
     .dot.error { background: var(--danger); }
+    .dot.listening { background: var(--danger); animation: pulse 0.6s ease-in-out infinite; }
     @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+    /* ── Detected language badge ── */
+    .detected-badge {
+      display: none;
+      padding: 0.3rem 1rem 0;
+      font-size: 0.73rem;
+      color: var(--text-muted);
+    }
+    .detected-badge strong { color: var(--accent2); }
 
     /* ── Quick phrases ── */
     .quick-bar {
@@ -273,11 +307,7 @@
       transition: all 0.15s;
       white-space: nowrap;
     }
-    .quick-chip:hover {
-      border-color: var(--accent);
-      color: var(--accent2);
-      background: rgba(108,99,255,0.1);
-    }
+    .quick-chip:hover { border-color: var(--accent); color: var(--accent2); background: rgba(108,99,255,0.1); }
 
     /* ── History ── */
     .history-section {
@@ -330,26 +360,9 @@
       transition: all 0.15s;
     }
     .history-item:hover { border-color: var(--accent); background: rgba(108,99,255,0.08); }
-    .history-langs {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      margin-bottom: 0.3rem;
-    }
-    .history-src {
-      font-size: 0.85rem;
-      color: var(--text);
-      margin-bottom: 0.18rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .history-tgt {
-      font-size: 0.85rem;
-      color: var(--accent2);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+    .history-langs { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.3rem; }
+    .history-src { font-size: 0.85rem; color: var(--text); margin-bottom: 0.18rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .history-tgt { font-size: 0.85rem; color: var(--accent2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* ── Footer ── */
     footer {
@@ -387,16 +400,28 @@
       </div>
     </div>
 
+    <!-- Formality toggle -->
+    <div class="formality-bar">
+      <span class="formality-label">Tone:</span>
+      <div class="formality-seg">
+        <button class="formality-btn" data-val="casual">😊 Casual</button>
+        <button class="formality-btn active" data-val="neutral">✦ Natural</button>
+        <button class="formality-btn" data-val="formal">👔 Formal</button>
+      </div>
+    </div>
+
     <!-- Translation panels -->
     <div class="panels">
       <div class="panel">
         <div class="panel-header">
           <span id="inputLangLabel">English</span>
           <div class="panel-actions">
+            <button class="icon-btn" id="micBtn" title="Speak to translate">🎤</button>
             <button class="icon-btn" id="clearBtn" title="Clear">✕</button>
           </div>
         </div>
         <textarea id="inputText" placeholder="Type here…" spellcheck="true" autofocus></textarea>
+        <div class="detected-badge" id="detectedBadge"></div>
         <div class="status-bar">
           <div class="status-indicator">
             <div class="dot" id="dot"></div>
@@ -451,24 +476,28 @@
 
     // ── Languages ──
     const langs = {
-      en: { label: "English",    flag: "🇺🇸", speech: "en-US" },
-      es: { label: "Spanish",    flag: "🇪🇸", speech: "es-ES" },
-      fr: { label: "French",     flag: "🇫🇷", speech: "fr-FR" },
-      ar: { label: "Arabic",     flag: "🇸🇦", speech: "ar-SA" },
-      de: { label: "German",     flag: "🇩🇪", speech: "de-DE" },
-      it: { label: "Italian",    flag: "🇮🇹", speech: "it-IT" },
-      pt: { label: "Portuguese", flag: "🇧🇷", speech: "pt-BR" },
-      zh: { label: "Chinese",    flag: "🇨🇳", speech: "zh-CN" },
-      ja: { label: "Japanese",   flag: "🇯🇵", speech: "ja-JP" },
+      auto: { label: "Auto Detect", flag: "🌐", speech: "en-US" },
+      en:   { label: "English",     flag: "🇺🇸", speech: "en-US" },
+      es:   { label: "Spanish",     flag: "🇪🇸", speech: "es-ES" },
+      fr:   { label: "French",      flag: "🇫🇷", speech: "fr-FR" },
+      ar:   { label: "Arabic",      flag: "🇸🇦", speech: "ar-SA" },
+      de:   { label: "German",      flag: "🇩🇪", speech: "de-DE" },
+      it:   { label: "Italian",     flag: "🇮🇹", speech: "it-IT" },
+      pt:   { label: "Portuguese",  flag: "🇧🇷", speech: "pt-BR" },
+      zh:   { label: "Chinese",     flag: "🇨🇳", speech: "zh-CN" },
+      ja:   { label: "Japanese",    flag: "🇯🇵", speech: "ja-JP" },
     };
 
     // ── State ──
-    let srcLang = "en";
-    let tgtLang = "es";
-    let debounceTimer = null;
+    let srcLang      = "en";
+    let tgtLang      = "es";
+    let formality    = "neutral";
+    let detectedLang = null;
+    let debounceTimer   = null;
     let abortController = null;
-    let openDropdown = null;
-    let translHistory = JSON.parse(localStorage.getItem("alazabHistory") || "[]");
+    let openDropdown    = null;
+    let isListening     = false;
+    let translHistory   = JSON.parse(localStorage.getItem("alazabHistory") || "[]");
 
     // ── Elements ──
     const inputText    = document.getElementById("inputText");
@@ -478,25 +507,38 @@
     const charCount    = document.getElementById("charCount");
     const outCharCount = document.getElementById("outCharCount");
     const speakBtn     = document.getElementById("speakBtn");
+    const micBtn       = document.getElementById("micBtn");
 
     // ── Language dropdowns ──
     function buildDropdowns() {
-      ["src", "tgt"].forEach(which => {
-        const dropdown = document.getElementById(which + "Dropdown");
-        const current = which === "src" ? srcLang : tgtLang;
-        dropdown.innerHTML = Object.entries(langs).map(([code, lang]) =>
-          `<div class="lang-option ${code === current ? "active" : ""}" data-which="${which}" data-code="${code}">
+      // Source: "Auto Detect" on top, then all languages
+      const srcDropdown = document.getElementById("srcDropdown");
+      srcDropdown.innerHTML =
+        `<div class="lang-option auto-option ${srcLang === "auto" ? "active" : ""}" data-which="src" data-code="auto">
+          🌐 Auto Detect
+        </div>` +
+        Object.entries(langs)
+          .filter(([k]) => k !== "auto")
+          .map(([code, lang]) =>
+            `<div class="lang-option ${code === srcLang ? "active" : ""}" data-which="src" data-code="${code}">
+              ${lang.flag} ${lang.label}
+            </div>`
+          ).join("");
+
+      // Target: no "auto"
+      const tgtDropdown = document.getElementById("tgtDropdown");
+      tgtDropdown.innerHTML = Object.entries(langs)
+        .filter(([k]) => k !== "auto")
+        .map(([code, lang]) =>
+          `<div class="lang-option ${code === tgtLang ? "active" : ""}" data-which="tgt" data-code="${code}">
             ${lang.flag} ${lang.label}
           </div>`
         ).join("");
-      });
     }
 
     function toggleLangDropdown(which) {
       const dropdown = document.getElementById(which + "Dropdown");
-      if (openDropdown && openDropdown !== dropdown) {
-        openDropdown.classList.remove("open");
-      }
+      if (openDropdown && openDropdown !== dropdown) openDropdown.classList.remove("open");
       dropdown.classList.toggle("open");
       openDropdown = dropdown.classList.contains("open") ? dropdown : null;
     }
@@ -513,8 +555,9 @@
         const which = e.target.dataset.which;
         const code  = e.target.dataset.code;
         if (which === "src") {
-          if (code === tgtLang) tgtLang = srcLang;
+          if (code !== "auto" && code === tgtLang) tgtLang = srcLang === "auto" ? "en" : srcLang;
           srcLang = code;
+          if (code === "auto") detectedLang = null;
         } else {
           if (code === srcLang) srcLang = tgtLang;
           tgtLang = code;
@@ -533,20 +576,34 @@
 
     // ── UI helpers ──
     function updateLangUI() {
-      document.getElementById("srcFlag").textContent         = langs[srcLang].flag;
-      document.getElementById("srcLabel").textContent        = langs[srcLang].label;
-      document.getElementById("tgtFlag").textContent         = langs[tgtLang].flag;
-      document.getElementById("tgtLabel").textContent        = langs[tgtLang].label;
-      document.getElementById("inputLangLabel").textContent  = langs[srcLang].label;
-      document.getElementById("outputLangLabel").textContent = langs[tgtLang].label;
-      inputText.placeholder = `Type ${langs[srcLang].label} here…`;
+      const src = langs[srcLang];
+      const tgt = langs[tgtLang];
+      document.getElementById("srcFlag").textContent         = src.flag;
+      document.getElementById("srcLabel").textContent        = src.label;
+      document.getElementById("tgtFlag").textContent         = tgt.flag;
+      document.getElementById("tgtLabel").textContent        = tgt.label;
+      document.getElementById("inputLangLabel").textContent  = src.label;
+      document.getElementById("outputLangLabel").textContent = tgt.label;
+      inputText.placeholder = srcLang === "auto" ? "Type or paste anything — language auto-detected…" : `Type ${src.label} here…`;
       inputText.dir  = srcLang === "ar" ? "rtl" : "ltr";
       outputText.dir = tgtLang === "ar" ? "rtl" : "ltr";
+      renderDetectedBadge();
+    }
+
+    function renderDetectedBadge() {
+      const badge = document.getElementById("detectedBadge");
+      if (srcLang === "auto" && detectedLang) {
+        badge.style.display = "block";
+        badge.innerHTML = `🔍 Detected: <strong>${detectedLang}</strong>`;
+      } else {
+        badge.style.display = "none";
+      }
     }
 
     function setStatus(state) {
-      const msgs = { ready:"Ready", waiting:"Waiting…", translating:"Translating…", done:"Done", error:"Error" };
-      dot.className = "dot" + (["translating","waiting"].includes(state) ? " translating" : state === "done" ? " done" : state === "error" ? " error" : "");
+      const msgs = { ready:"Ready", waiting:"Waiting…", translating:"Translating…", done:"Done", error:"Error", listening:"Listening…" };
+      const dotClass = { translating:" translating", waiting:" translating", done:" done", error:" error", listening:" listening" };
+      dot.className = "dot" + (dotClass[state] || "");
       statusText.textContent = msgs[state] || state;
     }
 
@@ -569,34 +626,43 @@
 
     function getOutputText() {
       if (outputText.classList.contains("placeholder")) return "";
-      return Array.from(outputText.childNodes)
-        .filter(n => n.nodeType === 3)
-        .map(n => n.textContent)
-        .join("");
+      return Array.from(outputText.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent).join("");
     }
+
+    // ── Formality toggle ──
+    document.querySelectorAll(".formality-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".formality-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        formality = btn.dataset.val;
+        if (inputText.value.trim()) triggerTranslation();
+      });
+    });
 
     // ── Swap ──
     document.getElementById("swapBtn").addEventListener("click", () => {
       const prev = getOutputText();
-      [srcLang, tgtLang] = [tgtLang, srcLang];
-      updateLangUI();
-      buildDropdowns();
-      if (prev) {
-        inputText.value = prev;
-        updateCharCount();
-        triggerTranslation();
+      if (srcLang === "auto") {
+        // Use detected language as new target if available
+        const newSrc = tgtLang;
+        const newTgt = Object.entries(langs).find(([k,v]) => v.label === detectedLang)?.[0] || "en";
+        srcLang = newSrc; tgtLang = newTgt;
       } else {
-        setOutput("", true);
+        [srcLang, tgtLang] = [tgtLang, srcLang];
       }
+      detectedLang = null;
+      updateLangUI(); buildDropdowns();
+      if (prev) { inputText.value = prev; updateCharCount(); triggerTranslation(); }
+      else setOutput("", true);
     });
 
     // ── Clear ──
     document.getElementById("clearBtn").addEventListener("click", () => {
       inputText.value = "";
-      setOutput("", true);
-      setStatus("ready");
+      setOutput("", true); setStatus("ready");
       charCount.textContent = "0 chars";
       outCharCount.textContent = "0 chars";
+      detectedLang = null; renderDetectedBadge();
       if (abortController) abortController.abort();
     });
 
@@ -620,7 +686,7 @@
         return;
       }
       const u = new SpeechSynthesisUtterance(t);
-      u.lang = langs[tgtLang].speech;
+      u.lang = langs[tgtLang]?.speech || "en-US";
       u.rate = 0.95;
       u.onend  = () => speakBtn.classList.remove("speaking");
       u.onerror = () => speakBtn.classList.remove("speaking");
@@ -628,10 +694,64 @@
       window.speechSynthesis.speak(u);
     });
 
+    // ── Voice input ──
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        isListening = true;
+        micBtn.classList.add("listening");
+        setStatus("listening");
+      };
+
+      recognition.onresult = (e) => {
+        const transcript = Array.from(e.results).map(r => r[0].transcript).join("");
+        inputText.value = transcript;
+        updateCharCount();
+        if (e.results[e.results.length - 1].isFinal) {
+          clearTimeout(debounceTimer);
+          triggerTranslation();
+        }
+      };
+
+      recognition.onend = () => {
+        isListening = false;
+        micBtn.classList.remove("listening");
+        if (statusText.textContent === "Listening…") setStatus("ready");
+      };
+
+      recognition.onerror = (e) => {
+        isListening = false;
+        micBtn.classList.remove("listening");
+        if (e.error === "not-allowed") {
+          setOutput("⚠ Microphone permission denied. Please allow mic access in your browser.", false, false);
+          setStatus("error");
+        }
+      };
+    } else {
+      micBtn.style.display = "none"; // not supported in this browser
+    }
+
+    micBtn.addEventListener("click", () => {
+      if (!recognition) return;
+      if (isListening) {
+        recognition.stop();
+      } else {
+        const speechLang = (srcLang === "auto" || !langs[srcLang]) ? "en-US" : langs[srcLang].speech;
+        recognition.lang = speechLang;
+        recognition.start();
+      }
+    });
+
     // ── Quick chips ──
     document.querySelectorAll(".quick-chip").forEach(chip => {
       chip.addEventListener("click", () => {
-        if (srcLang !== "en") { srcLang = "en"; updateLangUI(); buildDropdowns(); }
+        if (srcLang !== "en" && srcLang !== "auto") { srcLang = "en"; updateLangUI(); buildDropdowns(); }
         inputText.value = chip.dataset.text;
         updateCharCount();
         triggerTranslation();
@@ -647,6 +767,7 @@
       updateCharCount();
       if (!inputText.value.trim()) {
         setOutput("", true); setStatus("ready");
+        detectedLang = null; renderDetectedBadge();
         if (abortController) abortController.abort();
         return;
       }
@@ -672,8 +793,9 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             text,
-            srcLang: langs[srcLang].label,
+            srcLang: srcLang === "auto" ? "Auto Detect" : langs[srcLang].label,
             tgtLang: langs[tgtLang].label,
+            formality,
           }),
           signal: abortController.signal,
         });
@@ -684,6 +806,12 @@
           setOutput(`⚠ ${json.error || "HTTP " + res.status}`, false, false);
           setStatus("error");
           return;
+        }
+
+        // Handle auto-detected language
+        if (json.detectedLang) {
+          detectedLang = json.detectedLang;
+          renderDetectedBadge();
         }
 
         setOutput(json.translation, false, false);
@@ -700,7 +828,10 @@
 
     // ── History ──
     function addToHistory(srcText, tgtText) {
-      translHistory.unshift({ sl: srcLang, tl: tgtLang, src: srcText, tgt: tgtText });
+      const sl = srcLang === "auto"
+        ? (Object.entries(langs).find(([k,v]) => v.label === detectedLang)?.[0] || "en")
+        : srcLang;
+      translHistory.unshift({ sl, tl: tgtLang, src: srcText, tgt: tgtText });
       if (translHistory.length > 20) translHistory.pop();
       localStorage.setItem("alazabHistory", JSON.stringify(translHistory));
       renderHistory();
@@ -712,8 +843,8 @@
       if (!translHistory.length) { section.style.display = "none"; return; }
       section.style.display = "block";
       list.innerHTML = translHistory.map((h, i) => {
-        const sl = langs[h.sl] || { flag: "?", label: h.sl };
-        const tl = langs[h.tl] || { flag: "?", label: h.tl };
+        const sl = langs[h.sl] || { flag: "🌐", label: h.sl };
+        const tl = langs[h.tl] || { flag: "🌐", label: h.tl };
         return `<div class="history-item" data-index="${i}">
           <div class="history-langs">${sl.flag} ${sl.label} → ${tl.flag} ${tl.label}</div>
           <div class="history-src">${escHtml(h.src)}</div>
@@ -733,8 +864,7 @@
       if (!h) return;
       srcLang = h.sl; tgtLang = h.tl;
       updateLangUI(); buildDropdowns();
-      inputText.value = h.src;
-      updateCharCount();
+      inputText.value = h.src; updateCharCount();
       setOutput(h.tgt, false, false);
       outCharCount.textContent = `${h.tgt.length} chars`;
       setStatus("done");

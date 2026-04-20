@@ -43,10 +43,20 @@ try {
                 $bodyRaw = $reader.ReadToEnd()
                 $data    = $bodyRaw | ConvertFrom-Json
 
-                $srcLang = if ($data.srcLang) { $data.srcLang } else { "English" }
-                $tgtLang = if ($data.tgtLang) { $data.tgtLang } else { "Spanish" }
+                $srcLang   = if ($data.srcLang)  { $data.srcLang }  else { "English" }
+                $tgtLang   = if ($data.tgtLang)  { $data.tgtLang }  else { "Spanish" }
+                $formality = if ($data.formality) { $data.formality } else { "neutral" }
 
-                $sysPrompt = "You are Alazab Translator. Translate from $srcLang to $tgtLang. Output ONLY the translation, no explanations, no alternatives, no notes. Preserve tone, formality, idioms, and punctuation."
+                $formalityNote = ""
+                if ($formality -eq "formal") { $formalityNote = " Use formal, polite register." }
+                if ($formality -eq "casual") { $formalityNote = " Use casual, informal, everyday language." }
+
+                $isAutoDetect = ($srcLang -eq "Auto Detect")
+                if ($isAutoDetect) {
+                    $sysPrompt = "Detect the language of the input text, then translate it to $tgtLang.$formalityNote Respond ONLY with valid JSON: {`"detectedLang`":`"English`",`"translation`":`"translated text`"}"
+                } else {
+                    $sysPrompt = "You are Alazab Translator. Translate from $srcLang to $tgtLang. Output ONLY the translation, no explanations, no alternatives, no notes. Preserve tone, formality, idioms, and punctuation.$formalityNote"
+                }
 
                 $payload = ConvertTo-Json -Depth 5 @{
                     model      = "claude-haiku-4-5"
@@ -66,7 +76,13 @@ try {
                 $rawText     = [System.Text.Encoding]::UTF8.GetString($webResp.RawContentStream.ToArray())
                 $result      = $rawText | ConvertFrom-Json
                 $translation = $result.content[0].text
-                $out         = ConvertTo-Json @{ translation = $translation }
+                if ($isAutoDetect) {
+                    $raw = $translation.Trim() -replace '^```json\s*','' -replace '^```\s*','' -replace '```\s*$',''
+                    $parsed = $raw | ConvertFrom-Json
+                    $out = ConvertTo-Json @{ translation = $parsed.translation; detectedLang = $parsed.detectedLang }
+                } else {
+                    $out = ConvertTo-Json @{ translation = $translation }
+                }
                 Write-Resp $resp "application/json" $out
 
             } catch {
