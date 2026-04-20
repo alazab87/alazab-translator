@@ -6,26 +6,18 @@
   <title>Alazab Translator</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d2e;
-      --surface2: #252840;
-      --border: #2e3155;
-      --accent: #6c63ff;
-      --accent2: #a78bfa;
-      --text: #e8e8f0;
-      --text-muted: #7c7d99;
-      --success: #34d399;
-      --danger: #f87171;
-      --glow: rgba(108, 99, 255, 0.15);
+      --bg: #0f1117; --surface: #1a1d2e; --surface2: #252840;
+      --border: #2e3155; --accent: #6c63ff; --accent2: #a78bfa;
+      --text: #e8e8f0; --text-muted: #7c7d99;
+      --success: #34d399; --danger: #f87171; --gold: #f5c518;
+      --glow: rgba(108,99,255,0.15);
     }
-
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
 
     /* ── Header ── */
-    header { text-align: center; padding: 1.6rem 1rem 1rem; background: linear-gradient(180deg, rgba(108,99,255,0.08) 0%, transparent 100%); border-bottom: 1px solid var(--border); }
-    .logo { display: inline-flex; align-items: center; gap: 0.6rem; font-size: 1.9rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.5px; }
+    header { text-align: center; padding: 1.6rem 1rem 1rem; background: linear-gradient(180deg,rgba(108,99,255,0.08) 0%,transparent 100%); border-bottom: 1px solid var(--border); }
+    .logo { display: inline-flex; align-items: center; gap: 0.6rem; font-size: 1.9rem; font-weight: 700; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.5px; }
     .logo-icon { font-size: 2rem; -webkit-text-fill-color: initial; }
     .tagline { color: var(--text-muted); font-size: 0.82rem; margin-top: 0.3rem; letter-spacing: 0.5px; }
 
@@ -47,7 +39,7 @@
     .swap-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 50%; width: 2.6rem; height: 2.6rem; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--accent2); font-size: 1.1rem; transition: all 0.25s; flex-shrink: 0; }
     .swap-btn:hover { background: rgba(108,99,255,0.2); border-color: var(--accent); transform: rotate(180deg); }
 
-    /* ── Formality bar ── */
+    /* ── Formality ── */
     .formality-bar { display: flex; align-items: center; justify-content: center; gap: 0.7rem; }
     .formality-label { font-size: 0.75rem; color: var(--text-muted); }
     .formality-seg { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 2rem; padding: 0.18rem; gap: 0.1rem; }
@@ -69,16 +61,21 @@
     .icon-btn.copied { color: var(--success); }
     .icon-btn.speaking { color: var(--accent); }
     .icon-btn.listening { color: var(--danger); animation: pulse 0.7s ease-in-out infinite; }
+    .icon-btn.starred { color: var(--gold); }
 
     textarea { flex: 1; background: transparent; border: none; resize: none; color: var(--text); font-size: 1.05rem; line-height: 1.65; padding: 1rem; min-height: 200px; outline: none; font-family: inherit; }
     textarea::placeholder { color: var(--text-muted); }
 
-    /* ── Output text + clickable words ── */
+    /* ── Doc banner ── */
+    .doc-banner { display: none; align-items: center; justify-content: space-between; padding: 0.38rem 1rem; background: rgba(108,99,255,0.08); border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--accent2); }
+    .doc-clear-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.72rem; padding: 0.1rem 0.4rem; border-radius: 0.3rem; font-family: inherit; transition: color 0.15s; }
+    .doc-clear-btn:hover { color: var(--danger); }
+
+    /* ── Output text + word chips ── */
     .output-text { flex: 1; padding: 1rem; font-size: 1.05rem; line-height: 1.65; min-height: 200px; color: var(--text); white-space: pre-wrap; word-break: break-word; }
     .output-text.placeholder { color: var(--text-muted); font-style: italic; }
     .cursor { display: inline-block; width: 2px; height: 1.1em; background: var(--accent); vertical-align: text-bottom; animation: blink 1s step-end infinite; margin-left: 1px; }
-    @keyframes blink { 50% { opacity: 0; } }
-
+    @keyframes blink { 50% { opacity:0; } }
     .word-chip { cursor: pointer; border-radius: 3px; padding: 0 1px; transition: background 0.12s, color 0.12s; }
     .word-chip:hover { background: rgba(108,99,255,0.25); color: var(--accent2); }
     .word-chip.selected { background: rgba(108,99,255,0.35); color: var(--accent2); outline: 1px dashed var(--accent); }
@@ -86,9 +83,9 @@
     /* ── Romanization ── */
     .romanization { display: none; padding: 0.2rem 1rem 0.7rem; font-size: 0.8rem; color: var(--text-muted); font-style: italic; letter-spacing: 0.3px; line-height: 1.5; border-top: 1px dashed var(--border); }
 
-    /* ── Alternatives popup ── */
+    /* ── Alt popup ── */
     .alt-popup { position: fixed; background: var(--surface2); border: 1px solid var(--accent); border-radius: 0.7rem; padding: 0.3rem; z-index: 500; min-width: 140px; box-shadow: 0 6px 24px rgba(0,0,0,0.55); animation: popIn 0.12s ease; }
-    @keyframes popIn { from { opacity:0; transform:scale(0.93); } to { opacity:1; transform:scale(1); } }
+    @keyframes popIn { from{opacity:0;transform:scale(0.93)} to{opacity:1;transform:scale(1)} }
     .alt-header { font-size: 0.68rem; color: var(--text-muted); padding: 0.2rem 0.65rem 0.3rem; text-transform: uppercase; letter-spacing: 0.4px; }
     .alt-option { padding: 0.4rem 0.7rem; border-radius: 0.45rem; cursor: pointer; font-size: 0.88rem; color: var(--text); transition: background 0.12s; }
     .alt-option:hover { background: rgba(108,99,255,0.2); color: var(--accent2); }
@@ -102,31 +99,45 @@
     .dot.done { background: var(--success); }
     .dot.error { background: var(--danger); }
     .dot.listening { background: var(--danger); animation: pulse 0.6s ease-in-out infinite; }
-    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
     /* ── Detected badge ── */
     .detected-badge { display: none; padding: 0.3rem 1rem 0; font-size: 0.73rem; color: var(--text-muted); }
     .detected-badge strong { color: var(--accent2); }
 
-    /* ── Quick phrases ── */
-    .quick-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
-    .quick-label { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
-    .quick-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; padding: 0.3rem 0.85rem; font-size: 0.78rem; color: var(--text-muted); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
-    .quick-chip:hover { border-color: var(--accent); color: var(--accent2); background: rgba(108,99,255,0.1); }
+    /* ── Phrasebook ── */
+    .phrasebook-section { background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; overflow: hidden; }
+    .pb-tabs { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+    .pb-tabs::-webkit-scrollbar { display: none; }
+    .pb-tab { background: none; border: none; border-bottom: 2px solid transparent; padding: 0.55rem 0.95rem; font-size: 0.8rem; color: var(--text-muted); cursor: pointer; font-family: inherit; white-space: nowrap; transition: all 0.15s; }
+    .pb-tab:hover { color: var(--text); }
+    .pb-tab.active { color: var(--accent2); border-bottom-color: var(--accent); font-weight: 600; }
+    .pb-phrases { display: flex; gap: 0.5rem; flex-wrap: wrap; padding: 0.65rem 0.85rem; }
+    .pb-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 1rem; padding: 0.3rem 0.85rem; font-size: 0.78rem; color: var(--text-muted); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+    .pb-chip:hover { border-color: var(--accent); color: var(--accent2); background: rgba(108,99,255,0.1); }
 
-    /* ── History ── */
-    .history-section { background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; overflow: hidden; }
-    .history-header { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-muted); }
-    .history-clear-btn { background: none; border: 1px solid var(--border); border-radius: 0.5rem; color: var(--text-muted); font-size: 0.72rem; padding: 0.2rem 0.6rem; cursor: pointer; transition: all 0.15s; font-family: inherit; }
-    .history-clear-btn:hover { border-color: var(--danger); color: var(--danger); }
-    .history-list { max-height: 280px; overflow-y: auto; padding: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
-    .history-list::-webkit-scrollbar { width: 5px; }
-    .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    /* ── Shared section styles (history + favorites) ── */
+    .collapsible-section { background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; overflow: hidden; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-muted); }
+    .section-clear-btn { background: none; border: 1px solid var(--border); border-radius: 0.5rem; color: var(--text-muted); font-size: 0.72rem; padding: 0.2rem 0.6rem; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .section-clear-btn:hover { border-color: var(--danger); color: var(--danger); }
+    .section-list { max-height: 280px; overflow-y: auto; padding: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
+    .section-list::-webkit-scrollbar { width: 5px; }
+    .section-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── History items ── */
     .history-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 0.6rem; padding: 0.6rem 0.85rem; cursor: pointer; transition: all 0.15s; }
     .history-item:hover { border-color: var(--accent); background: rgba(108,99,255,0.08); }
-    .history-langs { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.3rem; }
-    .history-src { font-size: 0.85rem; color: var(--text); margin-bottom: 0.18rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .history-tgt { font-size: 0.85rem; color: var(--accent2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-langs { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.3rem; }
+    .item-src { font-size: 0.85rem; color: var(--text); margin-bottom: 0.18rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-tgt { font-size: 0.85rem; color: var(--accent2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* ── Favorites items ── */
+    .fav-item { display: flex; align-items: flex-start; gap: 0.4rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 0.6rem; padding: 0.6rem 0.85rem; transition: border-color 0.15s; }
+    .fav-item:hover { border-color: var(--gold); }
+    .fav-content { flex: 1; min-width: 0; cursor: pointer; }
+    .fav-remove { background: none; border: none; color: var(--text-muted); font-size: 0.85rem; cursor: pointer; padding: 0.1rem 0.25rem; border-radius: 0.3rem; flex-shrink: 0; transition: color 0.15s; line-height: 1; margin-top: 0.1rem; }
+    .fav-remove:hover { color: var(--danger); }
 
     /* ── Footer ── */
     footer { text-align: center; padding: 0.8rem; font-size: 0.72rem; color: var(--text-muted); border-top: 1px solid var(--border); }
@@ -170,15 +181,22 @@
 
     <!-- Translation panels -->
     <div class="panels">
+      <!-- Input -->
       <div class="panel">
         <div class="panel-header">
           <span id="inputLangLabel">English</span>
           <div class="panel-actions">
+            <button class="icon-btn" id="docBtn" title="Upload document (.txt .pdf .docx)">📎</button>
             <button class="icon-btn" id="micBtn" title="Speak to translate">🎤</button>
             <button class="icon-btn" id="clearBtn" title="Clear">✕</button>
           </div>
         </div>
+        <input type="file" id="docInput" accept=".txt,.pdf,.docx" style="display:none">
         <textarea id="inputText" placeholder="Type here…" spellcheck="true" autofocus></textarea>
+        <div class="doc-banner" id="docBanner">
+          <span id="docBannerName"></span>
+          <button class="doc-clear-btn" id="docClearBtn">✕ Clear</button>
+        </div>
         <div class="detected-badge" id="detectedBadge"></div>
         <div class="status-bar">
           <div class="status-indicator">
@@ -189,41 +207,48 @@
         </div>
       </div>
 
+      <!-- Output -->
       <div class="panel output-panel">
         <div class="panel-header">
           <span id="outputLangLabel">Spanish</span>
           <div class="panel-actions">
+            <button class="icon-btn" id="dlBtn" title="Download translation" style="display:none">📥</button>
             <button class="icon-btn" id="copyBtn" title="Copy">⧉</button>
+            <button class="icon-btn" id="starBtn" title="Save to favorites">☆</button>
             <button class="icon-btn" id="speakBtn" title="Listen">🔊</button>
           </div>
         </div>
         <div class="output-text placeholder" id="outputText">Translation will appear here…</div>
         <div class="romanization" id="romanizationText"></div>
         <div class="status-bar">
-          <span id="altHint" style="font-size:0.7rem;color:var(--text-muted);opacity:0">💡 Click any word for alternatives</span>
+          <span id="altHint" style="font-size:0.7rem;opacity:0">💡 Click any word for alternatives</span>
           <span id="outCharCount">0 chars</span>
         </div>
       </div>
     </div>
 
-    <!-- Quick phrases -->
-    <div class="quick-bar">
-      <span class="quick-label">Try:</span>
-      <span class="quick-chip" data-text="Hello, how are you?">Hello, how are you?</span>
-      <span class="quick-chip" data-text="Where is the bathroom?">Where is bathroom?</span>
-      <span class="quick-chip" data-text="I would like a table for two, please.">Table for two</span>
-      <span class="quick-chip" data-text="How much does this cost?">How much?</span>
-      <span class="quick-chip" data-text="What time does the store close?">Store closing time</span>
-      <span class="quick-chip" data-text="I don't understand.">I don't understand</span>
+    <!-- Phrasebook -->
+    <div class="phrasebook-section">
+      <div class="pb-tabs" id="pbTabs"></div>
+      <div class="pb-phrases" id="pbPhrases"></div>
     </div>
 
-    <!-- Translation History -->
-    <div class="history-section" id="historySection" style="display:none">
-      <div class="history-header">
+    <!-- History -->
+    <div class="collapsible-section" id="historySection" style="display:none">
+      <div class="section-header">
         <span>🕐 Recent Translations</span>
-        <button class="history-clear-btn" id="historyClearBtn">Clear history</button>
+        <button class="section-clear-btn" id="historyClearBtn">Clear</button>
       </div>
-      <div class="history-list" id="historyList"></div>
+      <div class="section-list" id="historyList"></div>
+    </div>
+
+    <!-- Favorites -->
+    <div class="collapsible-section" id="favSection" style="display:none">
+      <div class="section-header">
+        <span>⭐ Favorites</span>
+        <button class="section-clear-btn" id="favClearBtn">Clear</button>
+      </div>
+      <div class="section-list" id="favList"></div>
     </div>
   </main>
 
@@ -232,33 +257,37 @@
   </footer>
 
   <script>
-
     // ── Languages ──
     const langs = {
-      auto: { label: "Auto Detect",  flag: "🌐", speech: "en-US" },
-      en:   { label: "English",      flag: "🇺🇸", speech: "en-US" },
-      es:   { label: "Spanish",      flag: "🇪🇸", speech: "es-ES" },
-      fr:   { label: "French",       flag: "🇫🇷", speech: "fr-FR" },
-      ar:   { label: "Arabic",       flag: "🇸🇦", speech: "ar-SA" },
-      de:   { label: "German",       flag: "🇩🇪", speech: "de-DE" },
-      it:   { label: "Italian",      flag: "🇮🇹", speech: "it-IT" },
-      pt:   { label: "Portuguese",   flag: "🇧🇷", speech: "pt-BR" },
-      zh:   { label: "Chinese",      flag: "🇨🇳", speech: "zh-CN" },
-      ja:   { label: "Japanese",     flag: "🇯🇵", speech: "ja-JP" },
+      auto: { label:"Auto Detect", flag:"🌐", speech:"en-US" },
+      en:   { label:"English",     flag:"🇺🇸", speech:"en-US" },
+      es:   { label:"Spanish",     flag:"🇪🇸", speech:"es-ES" },
+      fr:   { label:"French",      flag:"🇫🇷", speech:"fr-FR" },
+      ar:   { label:"Arabic",      flag:"🇸🇦", speech:"ar-SA" },
+      de:   { label:"German",      flag:"🇩🇪", speech:"de-DE" },
+      it:   { label:"Italian",     flag:"🇮🇹", speech:"it-IT" },
+      pt:   { label:"Portuguese",  flag:"🇧🇷", speech:"pt-BR" },
+      zh:   { label:"Chinese",     flag:"🇨🇳", speech:"zh-CN" },
+      ja:   { label:"Japanese",    flag:"🇯🇵", speech:"ja-JP" },
+    };
+
+    // ── Phrasebook data ──
+    const phrasebook = {
+      "👋 Greetings": ["Hello, how are you?","Good morning!","Good night","Nice to meet you","Goodbye","Thank you very much","You're welcome","Please","Excuse me","I'm sorry"],
+      "✈️ Travel":    ["Where is the bathroom?","Where is the nearest hotel?","How do I get to the airport?","I need a taxi","Where is the train station?","I am lost","Can you help me?","How far is it?","What time does it open?","I need a map"],
+      "🍽️ Food":      ["Table for two, please","The menu, please","I am vegetarian","I have a nut allergy","No spicy food, please","The bill, please","This is delicious!","Water, please","What do you recommend?","I don't eat meat"],
+      "🏥 Medical":   ["I need a doctor","Call an ambulance","I have a headache","I feel sick","Where is the nearest hospital?","I need medicine","I am allergic to...","I have chest pain","I am diabetic","I need urgent help"],
+      "🛍️ Shopping":  ["How much does this cost?","Do you have another size?","Can I try this on?","Do you accept credit cards?","I'm just looking","Can I get a discount?","Where is the fitting room?","Can I have a receipt?","This is too expensive","I'll take it"],
     };
 
     // ── State ──
-    let srcLang          = "en";
-    let tgtLang          = "es";
-    let formality        = "neutral";
-    let detectedLang     = null;
-    let currentTranslation = "";
-    let debounceTimer    = null;
-    let abortController  = null;
-    let openDropdown     = null;
-    let isListening      = false;
-    let altPopup         = null;
-    let translHistory    = JSON.parse(localStorage.getItem("alazabHistory") || "[]");
+    let srcLang = "en", tgtLang = "es", formality = "neutral";
+    let detectedLang = null, currentTranslation = "";
+    let debounceTimer = null, abortController = null;
+    let openDropdown = null, isListening = false, altPopup = null;
+    let docMode = false, currentPbCat = Object.keys(phrasebook)[0];
+    let translHistory = JSON.parse(localStorage.getItem("alazabHistory")    || "[]");
+    let favorites     = JSON.parse(localStorage.getItem("alazabFavorites")  || "[]");
 
     // ── Elements ──
     const inputText    = document.getElementById("inputText");
@@ -269,150 +298,111 @@
     const outCharCount = document.getElementById("outCharCount");
     const speakBtn     = document.getElementById("speakBtn");
     const micBtn       = document.getElementById("micBtn");
+    const starBtn      = document.getElementById("starBtn");
+    const dlBtn        = document.getElementById("dlBtn");
 
     // ── Language dropdowns ──
     function buildDropdowns() {
-      const srcDD = document.getElementById("srcDropdown");
-      srcDD.innerHTML =
-        `<div class="lang-option auto-option ${srcLang === "auto" ? "active" : ""}" data-which="src" data-code="auto">🌐 Auto Detect</div>` +
-        Object.entries(langs).filter(([k]) => k !== "auto").map(([code, lang]) =>
-          `<div class="lang-option ${code === srcLang ? "active" : ""}" data-which="src" data-code="${code}">${lang.flag} ${lang.label}</div>`
+      document.getElementById("srcDropdown").innerHTML =
+        `<div class="lang-option auto-option ${srcLang==="auto"?"active":""}" data-which="src" data-code="auto">🌐 Auto Detect</div>` +
+        Object.entries(langs).filter(([k])=>k!=="auto").map(([c,l])=>
+          `<div class="lang-option ${c===srcLang?"active":""}" data-which="src" data-code="${c}">${l.flag} ${l.label}</div>`
         ).join("");
-
-      const tgtDD = document.getElementById("tgtDropdown");
-      tgtDD.innerHTML = Object.entries(langs).filter(([k]) => k !== "auto").map(([code, lang]) =>
-        `<div class="lang-option ${code === tgtLang ? "active" : ""}" data-which="tgt" data-code="${code}">${lang.flag} ${lang.label}</div>`
-      ).join("");
+      document.getElementById("tgtDropdown").innerHTML =
+        Object.entries(langs).filter(([k])=>k!=="auto").map(([c,l])=>
+          `<div class="lang-option ${c===tgtLang?"active":""}" data-which="tgt" data-code="${c}">${l.flag} ${l.label}</div>`
+        ).join("");
     }
 
     function toggleDD(which) {
-      const dd = document.getElementById(which + "Dropdown");
-      if (openDropdown && openDropdown !== dd) openDropdown.classList.remove("open");
+      const dd = document.getElementById(which+"Dropdown");
+      if (openDropdown && openDropdown!==dd) openDropdown.classList.remove("open");
       dd.classList.toggle("open");
       openDropdown = dd.classList.contains("open") ? dd : null;
     }
 
-    document.getElementById("srcBadge").addEventListener("click", e => { if (!e.target.classList.contains("lang-option")) toggleDD("src"); });
-    document.getElementById("tgtBadge").addEventListener("click", e => { if (!e.target.classList.contains("lang-option")) toggleDD("tgt"); });
+    document.getElementById("srcBadge").addEventListener("click", e=>{ if(!e.target.classList.contains("lang-option")) toggleDD("src"); });
+    document.getElementById("tgtBadge").addEventListener("click", e=>{ if(!e.target.classList.contains("lang-option")) toggleDD("tgt"); });
 
-    document.addEventListener("click", e => {
-      // Alt popup close
-      if (altPopup && !e.target.closest(".alt-popup") && !e.target.classList.contains("word-chip")) {
-        closeAltPopup();
-      }
-      // Lang option select
+    document.addEventListener("click", e=>{
+      if (altPopup && !e.target.closest(".alt-popup") && !e.target.classList.contains("word-chip")) closeAltPopup();
       if (e.target.classList.contains("lang-option")) {
-        const which = e.target.dataset.which;
-        const code  = e.target.dataset.code;
-        if (which === "src") {
-          if (code !== "auto" && code === tgtLang) tgtLang = srcLang === "auto" ? "en" : srcLang;
+        const {which,code} = e.target.dataset;
+        if (which==="src") {
+          if (code!=="auto" && code===tgtLang) tgtLang = srcLang==="auto" ? "en" : srcLang;
           srcLang = code;
-          if (code === "auto") detectedLang = null;
+          if (code==="auto") detectedLang = null;
         } else {
-          if (code === srcLang) srcLang = tgtLang;
+          if (code===srcLang) srcLang = tgtLang;
           tgtLang = code;
         }
-        if (openDropdown) { openDropdown.classList.remove("open"); openDropdown = null; }
+        if (openDropdown) { openDropdown.classList.remove("open"); openDropdown=null; }
         updateLangUI(); buildDropdowns();
         if (inputText.value.trim()) triggerTranslation();
         return;
       }
-      // Close dropdowns
-      if (!e.target.closest(".lang-badge") && openDropdown) {
-        openDropdown.classList.remove("open");
-        openDropdown = null;
-      }
+      if (!e.target.closest(".lang-badge") && openDropdown) { openDropdown.classList.remove("open"); openDropdown=null; }
     });
 
     // ── UI helpers ──
     function updateLangUI() {
-      const src = langs[srcLang], tgt = langs[tgtLang];
+      const src=langs[srcLang], tgt=langs[tgtLang];
       document.getElementById("srcFlag").textContent         = src.flag;
       document.getElementById("srcLabel").textContent        = src.label;
       document.getElementById("tgtFlag").textContent         = tgt.flag;
       document.getElementById("tgtLabel").textContent        = tgt.label;
       document.getElementById("inputLangLabel").textContent  = src.label;
       document.getElementById("outputLangLabel").textContent = tgt.label;
-      inputText.placeholder = srcLang === "auto" ? "Type or paste anything — language auto-detected…" : `Type ${src.label} here…`;
-      inputText.dir  = srcLang === "ar" ? "rtl" : "ltr";
-      outputText.dir = tgtLang === "ar" ? "rtl" : "ltr";
+      inputText.placeholder = srcLang==="auto" ? "Type or paste anything — language auto-detected…" : `Type ${src.label} here…`;
+      inputText.dir  = srcLang==="ar" ? "rtl" : "ltr";
+      outputText.dir = tgtLang==="ar" ? "rtl" : "ltr";
       renderDetectedBadge();
     }
 
     function renderDetectedBadge() {
       const b = document.getElementById("detectedBadge");
-      if (srcLang === "auto" && detectedLang) {
-        b.style.display = "block";
-        b.innerHTML = `🔍 Detected: <strong>${detectedLang}</strong>`;
-      } else {
-        b.style.display = "none";
-      }
+      if (srcLang==="auto" && detectedLang) { b.style.display="block"; b.innerHTML=`🔍 Detected: <strong>${detectedLang}</strong>`; }
+      else b.style.display="none";
     }
 
     function setStatus(state) {
-      const msgs = { ready:"Ready", waiting:"Waiting…", translating:"Translating…", done:"Done", error:"Error", listening:"Listening…" };
-      const cls  = { translating:" translating", waiting:" translating", done:" done", error:" error", listening:" listening" };
-      dot.className = "dot" + (cls[state] || "");
-      statusText.textContent = msgs[state] || state;
+      const msgs={ready:"Ready",waiting:"Waiting…",translating:"Translating…",done:"Done",error:"Error",listening:"Listening…"};
+      const cls ={translating:" translating",waiting:" translating",done:" done",error:" error",listening:" listening"};
+      dot.className = "dot"+(cls[state]||"");
+      statusText.textContent = msgs[state]||state;
     }
 
     function setOutput(text, isPlaceholder, showCursor) {
       closeAltPopup();
-      document.getElementById("romanizationText").style.display = "none";
-      document.getElementById("altHint").style.opacity = "0";
-      outputText.innerHTML = "";
-      outputText.dir = tgtLang === "ar" ? "rtl" : "ltr";
-      if (isPlaceholder || !text) {
-        outputText.className = "output-text placeholder";
-        outputText.textContent = "Translation will appear here…";
-        return;
-      }
-      outputText.className = "output-text";
+      document.getElementById("romanizationText").style.display="none";
+      document.getElementById("altHint").style.opacity="0";
+      dlBtn.style.display="none";
+      outputText.innerHTML="";
+      outputText.dir = tgtLang==="ar"?"rtl":"ltr";
+      if (isPlaceholder||!text) { outputText.className="output-text placeholder"; outputText.textContent="Translation will appear here…"; return; }
+      outputText.className="output-text";
       outputText.appendChild(document.createTextNode(text));
-      if (showCursor) {
-        const c = document.createElement("span");
-        c.className = "cursor";
-        outputText.appendChild(c);
-      }
+      if (showCursor) { const c=document.createElement("span"); c.className="cursor"; outputText.appendChild(c); }
     }
 
-    // Called after a successful translation — makes words clickable
     function finalizeOutput(text, romanization) {
       closeAltPopup();
       currentTranslation = text;
-      outputText.innerHTML = "";
-      outputText.className = "output-text";
-      outputText.dir = tgtLang === "ar" ? "rtl" : "ltr";
-
-      // Split on whitespace, keep whitespace tokens
-      text.split(/(\s+)/).forEach(part => {
+      outputText.innerHTML="";
+      outputText.className="output-text";
+      outputText.dir = tgtLang==="ar"?"rtl":"ltr";
+      text.split(/(\s+)/).forEach(part=>{
         if (!part) return;
-        if (/^\s+$/.test(part)) {
-          outputText.appendChild(document.createTextNode(part));
-        } else {
-          const span = document.createElement("span");
-          span.className = "word-chip";
-          span.textContent = part;
-          span.addEventListener("click", ev => {
-            ev.stopPropagation();
-            const clean = part.replace(/[.,!?;:،。！？؟]/g, "").trim();
-            if (clean) showAlternatives(span, clean);
-          });
-          outputText.appendChild(span);
-        }
+        if (/^\s+$/.test(part)) { outputText.appendChild(document.createTextNode(part)); return; }
+        const span=document.createElement("span");
+        span.className="word-chip"; span.textContent=part;
+        span.addEventListener("click", ev=>{ ev.stopPropagation(); const clean=part.replace(/[.,!?;:،。！？؟]/g,"").trim(); if(clean) showAlternatives(span,clean); });
+        outputText.appendChild(span);
       });
-
-      // Romanization
-      const romanEl = document.getElementById("romanizationText");
-      if (romanization) {
-        romanEl.textContent = "🔤 " + romanization;
-        romanEl.style.display = "block";
-      } else {
-        romanEl.style.display = "none";
-      }
-
-      // Hint
-      document.getElementById("altHint").style.opacity = "1";
+      const romanEl=document.getElementById("romanizationText");
+      if (romanization) { romanEl.textContent="🔤 "+romanization; romanEl.style.display="block"; } else romanEl.style.display="none";
+      document.getElementById("altHint").style.opacity="1";
+      updateStarBtn();
     }
 
     function getOutputText() {
@@ -423,263 +413,304 @@
     // ── Alternatives popup ──
     async function showAlternatives(wordEl, cleanWord) {
       closeAltPopup();
-      document.querySelectorAll(".word-chip.selected").forEach(s => s.classList.remove("selected"));
+      document.querySelectorAll(".word-chip.selected").forEach(s=>s.classList.remove("selected"));
       wordEl.classList.add("selected");
-
       altPopup = document.createElement("div");
-      altPopup.className = "alt-popup";
-      altPopup.innerHTML = `<div class="alt-loading">Finding alternatives…</div>`;
-
-      const rect = wordEl.getBoundingClientRect();
-      altPopup.style.top  = Math.min(rect.bottom + 6, window.innerHeight - 160) + "px";
-      altPopup.style.left = Math.max(4, Math.min(rect.left, window.innerWidth - 164)) + "px";
+      altPopup.className="alt-popup";
+      altPopup.innerHTML=`<div class="alt-loading">Finding alternatives…</div>`;
+      const rect=wordEl.getBoundingClientRect();
+      altPopup.style.top  = Math.min(rect.bottom+6, window.innerHeight-160)+"px";
+      altPopup.style.left = Math.max(4, Math.min(rect.left, window.innerWidth-164))+"px";
       document.body.appendChild(altPopup);
-
       try {
-        const res = await fetch("/api/alternatives", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ word: cleanWord, context: currentTranslation, tgtLang: langs[tgtLang].label }),
-        });
-        const json = await res.json();
-        if (!json.alternatives?.length) throw new Error("no results");
-
-        altPopup.innerHTML =
-          `<div class="alt-header">Swap "${cleanWord}"</div>` +
-          json.alternatives.map((alt, i) =>
-            `<div class="alt-option" data-index="${i}">${escHtml(alt)}</div>`
-          ).join("");
-
-        altPopup.querySelectorAll(".alt-option").forEach(opt => {
-          opt.addEventListener("click", ev => {
-            ev.stopPropagation();
-            wordEl.textContent = json.alternatives[+opt.dataset.index];
-            wordEl.classList.remove("selected");
-            currentTranslation = getOutputText();
-            closeAltPopup();
-          });
-        });
-      } catch {
-        closeAltPopup();
-      }
+        const res=await fetch("/api/alternatives",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({word:cleanWord,context:currentTranslation,tgtLang:langs[tgtLang].label})});
+        const json=await res.json();
+        if (!json.alternatives?.length) throw new Error();
+        altPopup.innerHTML=`<div class="alt-header">Swap "${cleanWord}"</div>`+json.alternatives.map((a,i)=>`<div class="alt-option" data-i="${i}">${escHtml(a)}</div>`).join("");
+        altPopup.querySelectorAll(".alt-option").forEach(opt=>opt.addEventListener("click",ev=>{
+          ev.stopPropagation();
+          wordEl.textContent=json.alternatives[+opt.dataset.i];
+          wordEl.classList.remove("selected");
+          currentTranslation=getOutputText();
+          closeAltPopup();
+        }));
+      } catch { closeAltPopup(); }
     }
 
     function closeAltPopup() {
-      if (altPopup) { altPopup.remove(); altPopup = null; }
-      document.querySelectorAll(".word-chip.selected").forEach(s => s.classList.remove("selected"));
+      if (altPopup) { altPopup.remove(); altPopup=null; }
+      document.querySelectorAll(".word-chip.selected").forEach(s=>s.classList.remove("selected"));
     }
 
     // ── Formality ──
-    document.querySelectorAll(".formality-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".formality-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        formality = btn.dataset.val;
-        if (inputText.value.trim()) triggerTranslation();
-      });
-    });
+    document.querySelectorAll(".formality-btn").forEach(btn=>btn.addEventListener("click",()=>{
+      document.querySelectorAll(".formality-btn").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active"); formality=btn.dataset.val;
+      if (inputText.value.trim()) triggerTranslation();
+    }));
 
     // ── Swap ──
-    document.getElementById("swapBtn").addEventListener("click", () => {
-      const prev = getOutputText();
-      if (srcLang === "auto") {
-        const newTgt = Object.entries(langs).find(([k,v]) => v.label === detectedLang)?.[0] || "en";
-        srcLang = tgtLang; tgtLang = newTgt;
-      } else {
-        [srcLang, tgtLang] = [tgtLang, srcLang];
-      }
-      detectedLang = null;
-      updateLangUI(); buildDropdowns();
-      if (prev) { inputText.value = prev; updateCharCount(); triggerTranslation(); }
-      else setOutput("", true);
+    document.getElementById("swapBtn").addEventListener("click",()=>{
+      const prev=getOutputText();
+      if (srcLang==="auto") { const nTgt=Object.entries(langs).find(([k,v])=>v.label===detectedLang)?.[0]||"en"; srcLang=tgtLang; tgtLang=nTgt; }
+      else [srcLang,tgtLang]=[tgtLang,srcLang];
+      detectedLang=null; updateLangUI(); buildDropdowns();
+      if (prev) { inputText.value=prev; updateCharCount(); triggerTranslation(); } else setOutput("",true);
     });
 
     // ── Clear ──
-    document.getElementById("clearBtn").addEventListener("click", () => {
-      inputText.value = "";
-      setOutput("", true); setStatus("ready");
-      charCount.textContent = "0 chars";
-      outCharCount.textContent = "0 chars";
-      detectedLang = null; renderDetectedBadge();
+    document.getElementById("clearBtn").addEventListener("click",()=>{
+      inputText.value=""; setOutput("",true); setStatus("ready");
+      charCount.textContent="0 chars"; outCharCount.textContent="0 chars";
+      detectedLang=null; renderDetectedBadge(); docMode=false;
+      document.getElementById("docBanner").style.display="none";
       if (abortController) abortController.abort();
+      updateStarBtn();
     });
 
     // ── Copy ──
-    document.getElementById("copyBtn").addEventListener("click", async () => {
-      const t = getOutputText();
-      if (!t) return;
-      await navigator.clipboard.writeText(t).catch(() => {});
-      const btn = document.getElementById("copyBtn");
-      btn.textContent = "✓"; btn.classList.add("copied");
-      setTimeout(() => { btn.textContent = "⧉"; btn.classList.remove("copied"); }, 1500);
+    document.getElementById("copyBtn").addEventListener("click",async()=>{
+      const t=getOutputText(); if (!t) return;
+      await navigator.clipboard.writeText(t).catch(()=>{});
+      const btn=document.getElementById("copyBtn"); btn.textContent="✓"; btn.classList.add("copied");
+      setTimeout(()=>{ btn.textContent="⧉"; btn.classList.remove("copied"); },1500);
     });
 
     // ── Speak ──
-    speakBtn.addEventListener("click", () => {
-      const t = getOutputText();
-      if (!t || !window.speechSynthesis) return;
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
-        speakBtn.classList.remove("speaking");
-        return;
-      }
-      const u = new SpeechSynthesisUtterance(t);
-      u.lang = langs[tgtLang]?.speech || "en-US";
-      u.rate = 0.95;
-      u.onend = u.onerror = () => speakBtn.classList.remove("speaking");
-      speakBtn.classList.add("speaking");
-      window.speechSynthesis.speak(u);
+    speakBtn.addEventListener("click",()=>{
+      const t=getOutputText(); if (!t||!window.speechSynthesis) return;
+      if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); speakBtn.classList.remove("speaking"); return; }
+      const u=new SpeechSynthesisUtterance(t);
+      u.lang=langs[tgtLang]?.speech||"en-US"; u.rate=0.95;
+      u.onend=u.onerror=()=>speakBtn.classList.remove("speaking");
+      speakBtn.classList.add("speaking"); window.speechSynthesis.speak(u);
     });
 
-    // ── Voice input ──
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let recognition = null;
-
-    if (SpeechRecognition) {
-      recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-
-      recognition.onstart = () => { isListening = true; micBtn.classList.add("listening"); setStatus("listening"); };
-      recognition.onresult = e => {
-        const transcript = Array.from(e.results).map(r => r[0].transcript).join("");
-        inputText.value = transcript;
-        updateCharCount();
-        if (e.results[e.results.length - 1].isFinal) { clearTimeout(debounceTimer); triggerTranslation(); }
-      };
-      recognition.onend = () => { isListening = false; micBtn.classList.remove("listening"); if (statusText.textContent === "Listening…") setStatus("ready"); };
-      recognition.onerror = e => {
-        isListening = false; micBtn.classList.remove("listening");
-        if (e.error === "not-allowed") { setOutput("⚠ Microphone permission denied. Please allow mic access in your browser.", false, false); setStatus("error"); }
-      };
-    } else {
-      micBtn.style.display = "none";
+    // ── Star / Favorites ──
+    function updateStarBtn() {
+      const tgt=getOutputText(), src=inputText.value.trim();
+      const sl = srcLang==="auto" ? (Object.entries(langs).find(([k,v])=>v.label===detectedLang)?.[0]||"en") : srcLang;
+      const isStarred = tgt && src && favorites.some(f=>f.src===src && f.tl===tgtLang);
+      starBtn.textContent = isStarred ? "★" : "☆";
+      starBtn.classList.toggle("starred", !!isStarred);
     }
 
-    micBtn.addEventListener("click", () => {
-      if (!recognition) return;
-      if (isListening) { recognition.stop(); }
-      else { recognition.lang = langs[srcLang === "auto" ? "en" : srcLang]?.speech || "en-US"; recognition.start(); }
+    starBtn.addEventListener("click",()=>{
+      const tgt=getOutputText(), src=inputText.value.trim();
+      if (!tgt||!src) return;
+      const sl = srcLang==="auto" ? (Object.entries(langs).find(([k,v])=>v.label===detectedLang)?.[0]||"en") : srcLang;
+      const idx=favorites.findIndex(f=>f.src===src && f.tl===tgtLang);
+      if (idx>=0) favorites.splice(idx,1);
+      else { favorites.unshift({sl,tl:tgtLang,src,tgt}); if(favorites.length>50) favorites.pop(); }
+      localStorage.setItem("alazabFavorites",JSON.stringify(favorites));
+      renderFavorites(); updateStarBtn();
     });
 
-    // ── Quick chips ──
-    document.querySelectorAll(".quick-chip").forEach(chip => {
-      chip.addEventListener("click", () => {
-        if (srcLang !== "en" && srcLang !== "auto") { srcLang = "en"; updateLangUI(); buildDropdowns(); }
-        inputText.value = chip.dataset.text;
-        updateCharCount();
-        triggerTranslation();
-      });
-    });
-
-    // ── Input ──
-    function updateCharCount() { charCount.textContent = `${inputText.value.length} chars`; }
-
-    inputText.addEventListener("input", () => {
-      updateCharCount();
-      if (!inputText.value.trim()) {
-        setOutput("", true); setStatus("ready");
-        detectedLang = null; renderDetectedBadge();
-        if (abortController) abortController.abort();
-        return;
-      }
-      setStatus("waiting");
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(triggerTranslation, 900);
-    });
-
-    // ── Translation ──
-    async function triggerTranslation() {
-      const text = inputText.value.trim();
-      if (!text) return;
-
-      if (abortController) abortController.abort();
-      abortController = new AbortController();
-      closeAltPopup();
-
-      setStatus("translating");
-      setOutput("", false, true);
-
-      try {
-        const res = await fetch("/api/translate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text,
-            srcLang: srcLang === "auto" ? "Auto Detect" : langs[srcLang].label,
-            tgtLang: langs[tgtLang].label,
-            formality,
-          }),
-          signal: abortController.signal,
-        });
-
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok || json.error) { setOutput(`⚠ ${json.error || "HTTP " + res.status}`, false, false); setStatus("error"); return; }
-
-        if (json.detectedLang) { detectedLang = json.detectedLang; renderDetectedBadge(); }
-
-        finalizeOutput(json.translation, json.romanization || null);
-        outCharCount.textContent = `${json.translation.length} chars`;
-        setStatus("done");
-        addToHistory(text, json.translation);
-
-      } catch (err) {
-        if (err.name === "AbortError") return;
-        setOutput("⚠ Network error. Please try again.", false, false);
-        setStatus("error");
-      }
-    }
-
-    // ── History ──
-    function addToHistory(srcText, tgtText) {
-      const sl = srcLang === "auto"
-        ? (Object.entries(langs).find(([k,v]) => v.label === detectedLang)?.[0] || "en")
-        : srcLang;
-      translHistory.unshift({ sl, tl: tgtLang, src: srcText, tgt: tgtText });
-      if (translHistory.length > 20) translHistory.pop();
-      localStorage.setItem("alazabHistory", JSON.stringify(translHistory));
-      renderHistory();
-    }
-
-    function renderHistory() {
-      const section = document.getElementById("historySection");
-      const list    = document.getElementById("historyList");
-      if (!translHistory.length) { section.style.display = "none"; return; }
-      section.style.display = "block";
-      list.innerHTML = translHistory.map((h, i) => {
-        const sl = langs[h.sl] || { flag: "🌐", label: h.sl };
-        const tl = langs[h.tl] || { flag: "🌐", label: h.tl };
-        return `<div class="history-item" data-index="${i}">
-          <div class="history-langs">${sl.flag} ${sl.label} → ${tl.flag} ${tl.label}</div>
-          <div class="history-src">${escHtml(h.src)}</div>
-          <div class="history-tgt">${escHtml(h.tgt)}</div>
+    function renderFavorites() {
+      const section=document.getElementById("favSection"), list=document.getElementById("favList");
+      if (!favorites.length) { section.style.display="none"; return; }
+      section.style.display="block";
+      list.innerHTML=favorites.map((f,i)=>{
+        const sl=langs[f.sl]||{flag:"🌐",label:f.sl}, tl=langs[f.tl]||{flag:"🌐",label:f.tl};
+        return `<div class="fav-item">
+          <div class="fav-content" data-index="${i}">
+            <div class="item-langs">${sl.flag} ${sl.label} → ${tl.flag} ${tl.label}</div>
+            <div class="item-src">${escHtml(f.src)}</div>
+            <div class="item-tgt">${escHtml(f.tgt)}</div>
+          </div>
+          <button class="fav-remove" data-index="${i}" title="Remove">✕</button>
         </div>`;
       }).join("");
     }
 
+    document.getElementById("favList").addEventListener("click",e=>{
+      const rem=e.target.closest(".fav-remove");
+      if (rem) { favorites.splice(+rem.dataset.index,1); localStorage.setItem("alazabFavorites",JSON.stringify(favorites)); renderFavorites(); updateStarBtn(); return; }
+      const con=e.target.closest(".fav-content");
+      if (con) { const f=favorites[+con.dataset.index]; if(!f) return; srcLang=f.sl; tgtLang=f.tl; updateLangUI(); buildDropdowns(); inputText.value=f.src; updateCharCount(); finalizeOutput(f.tgt,null); outCharCount.textContent=`${f.tgt.length} chars`; setStatus("done"); updateStarBtn(); }
+    });
+
+    document.getElementById("favClearBtn").addEventListener("click",()=>{ favorites=[]; localStorage.removeItem("alazabFavorites"); renderFavorites(); updateStarBtn(); });
+
+    // ── Phrasebook ──
+    function buildPhrasebook() {
+      document.getElementById("pbTabs").innerHTML=Object.keys(phrasebook).map(cat=>
+        `<button class="pb-tab ${cat===currentPbCat?"active":""}" data-cat="${escHtml(cat)}">${cat}</button>`
+      ).join("");
+      renderPbPhrases();
+    }
+    function renderPbPhrases() {
+      document.getElementById("pbPhrases").innerHTML=phrasebook[currentPbCat].map(p=>
+        `<span class="pb-chip" data-text="${escHtml(p)}">${p}</span>`
+      ).join("");
+    }
+    document.getElementById("pbTabs").addEventListener("click",e=>{
+      if (!e.target.classList.contains("pb-tab")) return;
+      currentPbCat=e.target.dataset.cat;
+      document.querySelectorAll(".pb-tab").forEach(t=>t.classList.remove("active")); e.target.classList.add("active");
+      renderPbPhrases();
+    });
+    document.getElementById("pbPhrases").addEventListener("click",e=>{
+      if (!e.target.classList.contains("pb-chip")) return;
+      if (srcLang!=="en"&&srcLang!=="auto") { srcLang="en"; updateLangUI(); buildDropdowns(); }
+      inputText.value=e.target.dataset.text; updateCharCount(); triggerTranslation();
+    });
+
+    // ── Voice input ──
+    const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+    let recognition=null;
+    if (SpeechRecognition) {
+      recognition=new SpeechRecognition(); recognition.continuous=false; recognition.interimResults=true;
+      recognition.onstart=()=>{ isListening=true; micBtn.classList.add("listening"); setStatus("listening"); };
+      recognition.onresult=e=>{ const t=Array.from(e.results).map(r=>r[0].transcript).join(""); inputText.value=t; updateCharCount(); if(e.results[e.results.length-1].isFinal){clearTimeout(debounceTimer);triggerTranslation();} };
+      recognition.onend=()=>{ isListening=false; micBtn.classList.remove("listening"); if(statusText.textContent==="Listening…") setStatus("ready"); };
+      recognition.onerror=e=>{ isListening=false; micBtn.classList.remove("listening"); if(e.error==="not-allowed"){setOutput("⚠ Microphone permission denied.",false,false);setStatus("error");} };
+    } else micBtn.style.display="none";
+
+    micBtn.addEventListener("click",()=>{ if(!recognition) return; if(isListening) recognition.stop(); else { recognition.lang=langs[srcLang==="auto"?"en":srcLang]?.speech||"en-US"; recognition.start(); } });
+
+    // ── Document upload ──
+    const docInput=document.getElementById("docInput");
+
+    document.getElementById("docBtn").addEventListener("click",()=>docInput.click());
+
+    document.getElementById("docClearBtn").addEventListener("click",()=>{
+      docMode=false; document.getElementById("docBanner").style.display="none";
+      inputText.value=""; setOutput("",true); setStatus("ready");
+      charCount.textContent="0 chars"; outCharCount.textContent="0 chars";
+    });
+
+    dlBtn.addEventListener("click",()=>{
+      const text=getOutputText(); if(!text) return;
+      const blob=new Blob([text],{type:"text/plain;charset=utf-8"});
+      const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+      a.download=`translation-${langs[tgtLang].label.toLowerCase()}.txt`; a.click(); URL.revokeObjectURL(a.href);
+    });
+
+    docInput.addEventListener("change",async e=>{
+      const file=e.target.files[0]; if(!file) return; docInput.value="";
+      try {
+        setStatus("translating");
+        document.getElementById("docBanner").style.display="flex";
+        document.getElementById("docBannerName").textContent="📄 "+file.name;
+        docMode=true;
+        const text=await extractDocText(file);
+        if (!text.trim()) throw new Error("No text found in document");
+        inputText.value=text.slice(0,200)+(text.length>200?"…":"");
+        updateCharCount();
+        await translateDocument(text.trim());
+      } catch(err) { setOutput("⚠ "+err.message,false,false); setStatus("error"); }
+    });
+
+    async function loadScript(src) {
+      if (document.querySelector(`script[src="${src}"]`)) return;
+      return new Promise((resolve,reject)=>{ const s=document.createElement("script"); s.src=src; s.onload=resolve; s.onerror=reject; document.head.appendChild(s); });
+    }
+
+    async function extractDocText(file) {
+      const ext=file.name.split(".").pop().toLowerCase();
+      if (ext==="txt") return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=rej; r.readAsText(file); });
+      if (ext==="pdf") {
+        await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        const buf=await file.arrayBuffer();
+        const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+        let text="";
+        for (let i=1;i<=pdf.numPages;i++) { const pg=await pdf.getPage(i); const ct=await pg.getTextContent(); text+=ct.items.map(x=>x.str).join(" ")+"\n"; }
+        return text;
+      }
+      if (ext==="docx") {
+        await loadScript("https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js");
+        const buf=await file.arrayBuffer();
+        const result=await window.mammoth.extractRawText({arrayBuffer:buf});
+        return result.value;
+      }
+      throw new Error("Unsupported file type. Please use .txt, .pdf, or .docx");
+    }
+
+    async function translateDocument(text) {
+      const CHUNK=2500, chunks=splitChunks(text,CHUNK);
+      const translations=[];
+      for (let i=0;i<chunks.length;i++) {
+        setStatus(`Translating ${i+1} of ${chunks.length}…`);
+        const res=await fetch("/api/translate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:chunks[i],srcLang:srcLang==="auto"?"Auto Detect":langs[srcLang].label,tgtLang:langs[tgtLang].label,formality})});
+        const json=await res.json();
+        if (json.error) throw new Error(json.error);
+        translations.push(json.translation);
+      }
+      const full=translations.join("\n\n");
+      finalizeOutput(full,null);
+      outCharCount.textContent=`${full.length} chars`;
+      dlBtn.style.display="inline-flex";
+      setStatus("done");
+      addToHistory(text.slice(0,120)+(text.length>120?"…":""), full.slice(0,120)+(full.length>120?"…":""));
+    }
+
+    function splitChunks(text,max) {
+      if (text.length<=max) return [text];
+      const chunks=[]; let rem=text;
+      while (rem.length>0) {
+        if (rem.length<=max) { chunks.push(rem); break; }
+        let at=max;
+        const nl=rem.lastIndexOf("\n",max), dot=rem.lastIndexOf(".",max);
+        if (nl>max*0.6) at=nl+1; else if (dot>max*0.6) at=dot+1;
+        chunks.push(rem.slice(0,at).trim()); rem=rem.slice(at).trim();
+      }
+      return chunks.filter(c=>c.length>0);
+    }
+
+    // ── Input ──
+    function updateCharCount() { charCount.textContent=`${inputText.value.length} chars`; }
+    inputText.addEventListener("input",()=>{
+      updateCharCount();
+      if (!inputText.value.trim()) { setOutput("",true); setStatus("ready"); detectedLang=null; renderDetectedBadge(); if(abortController) abortController.abort(); updateStarBtn(); return; }
+      setStatus("waiting"); clearTimeout(debounceTimer); debounceTimer=setTimeout(triggerTranslation,900);
+    });
+
+    // ── Translation ──
+    async function triggerTranslation() {
+      const text=inputText.value.trim(); if(!text) return;
+      if (abortController) abortController.abort(); abortController=new AbortController();
+      closeAltPopup(); setStatus("translating"); setOutput("",false,true);
+      try {
+        const res=await fetch("/api/translate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,srcLang:srcLang==="auto"?"Auto Detect":langs[srcLang].label,tgtLang:langs[tgtLang].label,formality}),signal:abortController.signal});
+        const json=await res.json().catch(()=>({}));
+        if (!res.ok||json.error) { setOutput(`⚠ ${json.error||"HTTP "+res.status}`,false,false); setStatus("error"); return; }
+        if (json.detectedLang) { detectedLang=json.detectedLang; renderDetectedBadge(); }
+        finalizeOutput(json.translation,json.romanization||null);
+        outCharCount.textContent=`${json.translation.length} chars`;
+        setStatus("done"); addToHistory(text,json.translation);
+      } catch(err) { if(err.name==="AbortError") return; setOutput("⚠ Network error. Please try again.",false,false); setStatus("error"); }
+    }
+
+    // ── History ──
+    function addToHistory(src,tgt) {
+      const sl=srcLang==="auto"?(Object.entries(langs).find(([k,v])=>v.label===detectedLang)?.[0]||"en"):srcLang;
+      translHistory.unshift({sl,tl:tgtLang,src,tgt}); if(translHistory.length>20) translHistory.pop();
+      localStorage.setItem("alazabHistory",JSON.stringify(translHistory)); renderHistory();
+    }
+    function renderHistory() {
+      const sec=document.getElementById("historySection"), list=document.getElementById("historyList");
+      if (!translHistory.length) { sec.style.display="none"; return; }
+      sec.style.display="block";
+      list.innerHTML=translHistory.map((h,i)=>{
+        const sl=langs[h.sl]||{flag:"🌐",label:h.sl}, tl=langs[h.tl]||{flag:"🌐",label:h.tl};
+        return `<div class="history-item" data-index="${i}"><div class="item-langs">${sl.flag} ${sl.label} → ${tl.flag} ${tl.label}</div><div class="item-src">${escHtml(h.src)}</div><div class="item-tgt">${escHtml(h.tgt)}</div></div>`;
+      }).join("");
+    }
+    document.getElementById("historyList").addEventListener("click",e=>{
+      const item=e.target.closest(".history-item"); if(!item) return;
+      const h=translHistory[+item.dataset.index]; if(!h) return;
+      srcLang=h.sl; tgtLang=h.tl; updateLangUI(); buildDropdowns();
+      inputText.value=h.src; updateCharCount(); finalizeOutput(h.tgt,null);
+      outCharCount.textContent=`${h.tgt.length} chars`; setStatus("done"); updateStarBtn();
+    });
+    document.getElementById("historyClearBtn").addEventListener("click",()=>{ translHistory=[]; localStorage.removeItem("alazabHistory"); renderHistory(); });
+
     function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
-    document.getElementById("historyList").addEventListener("click", e => {
-      const item = e.target.closest(".history-item");
-      if (!item) return;
-      const h = translHistory[+item.dataset.index];
-      if (!h) return;
-      srcLang = h.sl; tgtLang = h.tl;
-      updateLangUI(); buildDropdowns();
-      inputText.value = h.src; updateCharCount();
-      finalizeOutput(h.tgt, null);
-      outCharCount.textContent = `${h.tgt.length} chars`;
-      setStatus("done");
-    });
-
-    document.getElementById("historyClearBtn").addEventListener("click", () => {
-      translHistory = []; localStorage.removeItem("alazabHistory"); renderHistory();
-    });
-
     // ── Init ──
-    buildDropdowns();
-    updateLangUI();
-    renderHistory();
+    buildDropdowns(); updateLangUI(); buildPhrasebook(); renderHistory(); renderFavorites();
   </script>
 </body>
 </html>
