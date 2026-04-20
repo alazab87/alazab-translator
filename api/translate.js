@@ -2,6 +2,14 @@ const Anthropic = require("@anthropic-ai/sdk");
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// Languages where we show romanized pronunciation
+const ROMANIZE = new Set(["Arabic", "Chinese", "Japanese"]);
+
+function cleanJson(text) {
+  return text.trim()
+    .replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/, "").trim();
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   if (req.method === "OPTIONS") return res.status(204).end();
@@ -14,35 +22,47 @@ module.exports = async function handler(req, res) {
     formality === "formal" ? " Use formal, polite register." :
     formality === "casual" ? " Use casual, informal, everyday language." : "";
 
+  const autoDetect  = srcLang === "Auto Detect";
+  const needsRoman  = ROMANIZE.has(tgtLang);
+
   try {
-    // ── Auto detect mode: detect language + translate in one call ──
-    if (srcLang === "Auto Detect") {
-      const response = await client.messages.create({
-        model: "claude-haiku-4-5",
-        max_tokens: 1200,
-        system: `Detect the language of the input text, then translate it to ${tgtLang}.${formalityNote} Respond ONLY with valid JSON in this exact format (no markdown, no extra text): {"detectedLang":"English","translation":"translated text here"}`,
+    // ── All four combinations ──
+    if (autoDetect && needsRoman) {
+      const r = await client.messages.create({
+        model: "claude-haiku-4-5", max_tokens: 1500,
+        system: `Detect the source language, translate to ${tgtLang}, and provide romanization (Latin alphabet pronunciation).${formalityNote} Respond ONLY with valid JSON: {"detectedLang":"English","translation":"translated text","romanization":"romanized text"}`,
         messages: [{ role: "user", content: text }],
       });
-
-      let raw = response.content[0].text.trim()
-        .replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/, "").trim();
-
-      const parsed = JSON.parse(raw);
-      return res.json({ translation: parsed.translation, detectedLang: parsed.detectedLang });
+      return res.json(JSON.parse(cleanJson(r.content[0].text)));
     }
 
-    // ── Normal translation ──
-    const response = await client.messages.create({
-      model: "claude-haiku-4-5",
-      max_tokens: 1024,
+    if (autoDetect) {
+      const r = await client.messages.create({
+        model: "claude-haiku-4-5", max_tokens: 1200,
+        system: `Detect the language of the input text, then translate it to ${tgtLang}.${formalityNote} Respond ONLY with valid JSON: {"detectedLang":"English","translation":"translated text"}`,
+        messages: [{ role: "user", content: text }],
+      });
+      return res.json(JSON.parse(cleanJson(r.content[0].text)));
+    }
+
+    if (needsRoman) {
+      const r = await client.messages.create({
+        model: "claude-haiku-4-5", max_tokens: 1500,
+        system: `You are Alazab Translator. Translate from ${srcLang} to ${tgtLang} and provide romanization (pronunciation in Latin letters).${formalityNote} Respond ONLY with valid JSON: {"translation":"translated text","romanization":"romanized pronunciation"}`,
+        messages: [{ role: "user", content: text }],
+      });
+      return res.json(JSON.parse(cleanJson(r.content[0].text)));
+    }
+
+    // ── Plain translation ──
+    const r = await client.messages.create({
+      model: "claude-haiku-4-5", max_tokens: 1024,
       system: `You are Alazab Translator. Translate from ${srcLang} to ${tgtLang}. Output ONLY the translation, no explanations, no alternatives, no notes. Preserve tone, formality, idioms, and punctuation.${formalityNote}`,
       messages: [{ role: "user", content: text }],
     });
-
-    res.json({ translation: response.content[0].text });
+    res.json({ translation: r.content[0].text });
 
   } catch (err) {
-    const status = err.status || 500;
-    res.status(status).json({ error: err.message });
+    res.status(err.status || 500).json({ error: err.message });
   }
 };
