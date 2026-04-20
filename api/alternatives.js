@@ -14,8 +14,8 @@ module.exports = async function handler(req, res) {
     const r = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 200,
-      system: `You are a translation assistant. Given a word from a ${tgtLang} translation and the full sentence for context, provide exactly 3 alternative translations for that specific word. Keep each alternative short (1–4 words). Do not repeat the original word. Respond ONLY with a JSON array: ["alt1","alt2","alt3"]`,
-      messages: [{ role: "user", content: `Full sentence: "${context}"\nWord to replace: "${word}"` }],
+      system: `The sentence below is written in ${tgtLang}. Give exactly 3 alternative ${tgtLang} words or short phrases that could replace the specified word while keeping the same meaning. IMPORTANT: all alternatives must be in ${tgtLang} — do NOT translate to English or any other language. Keep each option short (1–3 words). Respond ONLY with a JSON array: ["alt1","alt2","alt3"]`,
+      messages: [{ role: "user", content: `Sentence in ${tgtLang}: "${context}"\nWord to replace: "${word}"` }],
     });
 
     let raw = r.content[0].text.trim()

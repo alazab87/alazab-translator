@@ -73,31 +73,31 @@ try {
                 if ($formality -eq "formal") { $fNote = " Use formal, polite register." }
                 if ($formality -eq "casual") { $fNote = " Use casual, informal, everyday language." }
 
-                $isAuto    = ($srcLang -eq "Auto Detect")
+                $isAuto     = ($srcLang -eq "Auto Detect")
                 $needsRoman = @("Arabic","Chinese","Japanese") -contains $tgtLang
-                $needsJson = $isAuto -or $needsRoman
+                $outObj     = @{}
 
-                if ($isAuto -and $needsRoman) {
-                    $sys = "Detect the source language, translate to $tgtLang, and provide romanization.$fNote Respond ONLY with valid JSON: {`"detectedLang`":`"English`",`"translation`":`"..`",`"romanization`":`"..`"}"
-                } elseif ($isAuto) {
-                    $sys = "Detect the language, translate to $tgtLang.$fNote Respond ONLY with valid JSON: {`"detectedLang`":`"English`",`"translation`":`"translated text`"}"
-                } elseif ($needsRoman) {
-                    $sys = "Translate from $srcLang to $tgtLang and provide romanization.$fNote Respond ONLY with valid JSON: {`"translation`":`"..`",`"romanization`":`"..`"}"
-                } else {
-                    $sys = "You are Alazab Translator. Translate from $srcLang to $tgtLang. Output ONLY the translation.$fNote"
+                # Step 1: Detect language if needed
+                $effectiveSrc = $srcLang
+                if ($isAuto) {
+                    $detected = Invoke-Claude "Identify the language. Reply ONLY with the language name in English (e.g. Spanish, French, Arabic). Nothing else." $data.text.Substring(0, [Math]::Min(300, $data.text.Length)) 50
+                    $outObj.detectedLang = $detected.Trim()
+                    $effectiveSrc = $detected.Trim()
                 }
 
-                $raw = Invoke-Claude $sys $data.text 1500
+                # Step 2: Translate (plain text — always reliable)
+                $sys = "You are Alazab Translator. Translate from $effectiveSrc to $tgtLang. Output ONLY the translation.$fNote"
+                $translation = Invoke-Claude $sys $data.text 1024
+                $outObj.translation = $translation
 
-                if ($needsJson) {
-                    $parsed = (Clean-Json $raw) | ConvertFrom-Json
-                    $outObj = @{ translation = $parsed.translation }
-                    if ($parsed.detectedLang) { $outObj.detectedLang = $parsed.detectedLang }
-                    if ($parsed.romanization) { $outObj.romanization = $parsed.romanization }
-                    Write-Resp $resp "application/json" (ConvertTo-Json $outObj)
-                } else {
-                    Write-Resp $resp "application/json" (ConvertTo-Json @{ translation = $raw })
+                # Step 3: Romanize if needed (separate call — no JSON parsing issues)
+                if ($needsRoman) {
+                    $romanSys = "Provide the romanization (pronunciation in Latin alphabet) of this $tgtLang text. Output ONLY the romanization, nothing else."
+                    $roman = Invoke-Claude $romanSys $translation 500
+                    $outObj.romanization = $roman.Trim()
                 }
+
+                Write-Resp $resp "application/json" (ConvertTo-Json $outObj)
 
             } catch {
                 $resp.StatusCode = 500
@@ -112,8 +112,8 @@ try {
                 $reader = New-Object System.IO.StreamReader($req.InputStream, [System.Text.Encoding]::UTF8)
                 $data   = $reader.ReadToEnd() | ConvertFrom-Json
 
-                $sys = "You are a translation assistant. Given a $($data.tgtLang) word and its sentence context, provide exactly 3 short alternative translations for that word. Respond ONLY with a JSON array: [`"alt1`",`"alt2`",`"alt3`"]"
-                $msg = "Sentence: `"$($data.context)`"`nWord: `"$($data.word)`""
+                $sys = "The sentence below is in $($data.tgtLang). Give exactly 3 alternative $($data.tgtLang) words or short phrases to replace the given word. All alternatives MUST be in $($data.tgtLang) — do NOT use English. Respond ONLY with a JSON array: [`"alt1`",`"alt2`",`"alt3`"]"
+                $msg = "Sentence in $($data.tgtLang): `"$($data.context)`"`nWord to replace: `"$($data.word)`""
                 $raw = Invoke-Claude $sys $msg 200
                 $alts = (Clean-Json $raw) | ConvertFrom-Json
                 Write-Resp $resp "application/json" (ConvertTo-Json @{ alternatives = $alts })
