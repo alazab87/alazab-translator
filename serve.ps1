@@ -106,6 +106,22 @@ try {
             continue
         }
 
+        # ── /api/wordcard ──
+        if ($req.HttpMethod -eq "POST" -and $req.Url.LocalPath -eq "/api/wordcard") {
+            try {
+                $reader = New-Object System.IO.StreamReader($req.InputStream, [System.Text.Encoding]::UTF8)
+                $data   = $reader.ReadToEnd() | ConvertFrom-Json
+                $sys = "You are a bilingual dictionary API. Given a word or short phrase in $($data.srcLang), return a JSON object only - no markdown, no explanation.`n`nThe JSON must have exactly these fields:`n{`"translation`":`"translated to $($data.tgtLang)`",`"partOfSpeech`":`"noun/verb/adjective/adverb/phrase/expression`",`"definition`":`"short definition in $($data.tgtLang)`",`"example`":`"one example sentence in $($data.tgtLang)`",`"synonyms`":[`"syn1`",`"syn2`",`"syn3`"]}`n`nAll fields except partOfSpeech must be in $($data.tgtLang). Return valid JSON only."
+                $raw  = Invoke-Claude $sys $data.word 600
+                $json = (Clean-Json $raw)
+                Write-Resp $resp "application/json" $json
+            } catch {
+                $resp.StatusCode = 500
+                Write-Resp $resp "application/json" (ConvertTo-Json @{ error = $_.Exception.Message })
+            }
+            continue
+        }
+
         # ── /api/vision ──
         if ($req.HttpMethod -eq "POST" -and $req.Url.LocalPath -eq "/api/vision") {
             try {

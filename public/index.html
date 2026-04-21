@@ -191,6 +191,28 @@
     .conv-auto-btn.active { background: rgba(108,99,255,0.18); border-color: var(--accent); color: var(--accent2); }
     .conv-auto-label { font-size: 0.6rem; color: var(--text-muted); }
 
+    /* ── Word Card ── */
+    .wordcard { background: var(--surface); border: 1px solid var(--accent); border-radius: 1rem; overflow: hidden; box-shadow: 0 0 0 3px var(--glow); animation: slideDown 0.2s ease; }
+    @keyframes slideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+    .wc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1rem 1.1rem 0.6rem; }
+    .wc-left { flex: 1; }
+    .wc-word { font-size: 1.55rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+    .wc-pos { display: inline-block; margin-top: 0.3rem; background: rgba(108,99,255,0.18); color: var(--accent2); font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.6rem; border-radius: 1rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .wc-right { text-align: right; flex-shrink: 0; }
+    .wc-translation { font-size: 1.45rem; font-weight: 700; color: var(--accent2); line-height: 1.2; }
+    .wc-tl-label { font-size: 0.68rem; color: var(--text-muted); margin-top: 0.15rem; }
+    .wc-divider { height: 1px; background: var(--border); margin: 0 1.1rem; }
+    .wc-body { padding: 0.75rem 1.1rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+    .wc-section-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; margin-bottom: 0.15rem; }
+    .wc-definition { font-size: 0.88rem; color: var(--text); line-height: 1.55; }
+    .wc-example { font-size: 0.85rem; color: var(--text-muted); font-style: italic; line-height: 1.5; border-left: 2px solid var(--accent); padding-left: 0.65rem; }
+    .wc-synonyms { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .wc-syn { background: var(--surface2); border: 1px solid var(--border); border-radius: 1rem; padding: 0.22rem 0.75rem; font-size: 0.78rem; color: var(--text-muted); cursor: pointer; transition: all 0.15s; }
+    .wc-syn:hover { border-color: var(--accent); color: var(--accent2); background: rgba(108,99,255,0.1); }
+    .wc-loading { padding: 1.2rem 1.1rem; font-size: 0.82rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; }
+    .wc-spinner { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     /* ── Install banner ── */
     .install-banner { display: none; align-items: center; gap: 0.75rem; padding: 0.65rem 1rem; background: linear-gradient(135deg,rgba(108,99,255,0.18),rgba(167,139,250,0.12)); border-bottom: 1px solid var(--accent); font-size: 0.82rem; }
     .install-banner.show { display: flex; }
@@ -300,6 +322,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Word Card (shown for single-word translations) -->
+    <div class="wordcard" id="wordCard" style="display:none"></div>
 
     <!-- Live Conversation toggle -->
     <div class="conv-toggle-bar">
@@ -582,7 +607,7 @@
 
     // ── Clear ──
     document.getElementById("clearBtn").addEventListener("click",()=>{
-      inputText.value=""; setOutput("",true); setStatus("ready");
+      inputText.value=""; setOutput("",true); setStatus("ready"); hideWordCard();
       charCount.textContent="0 chars"; outCharCount.textContent="0 chars";
       detectedLang=null; renderDetectedBadge(); docMode=false;
       document.getElementById("docBanner").style.display="none";
@@ -828,7 +853,7 @@
     function updateCharCount() { charCount.textContent=`${inputText.value.length} chars`; }
     inputText.addEventListener("input",()=>{
       updateCharCount();
-      if (!inputText.value.trim()) { setOutput("",true); setStatus("ready"); detectedLang=null; renderDetectedBadge(); if(abortController) abortController.abort(); updateStarBtn(); return; }
+      if (!inputText.value.trim()) { setOutput("",true); setStatus("ready"); detectedLang=null; renderDetectedBadge(); hideWordCard(); if(abortController) abortController.abort(); updateStarBtn(); return; }
       setStatus("waiting"); clearTimeout(debounceTimer); debounceTimer=setTimeout(triggerTranslation,900);
     });
 
@@ -845,6 +870,8 @@
         finalizeOutput(json.translation,json.romanization||null);
         outCharCount.textContent=`${json.translation.length} chars`;
         setStatus("done"); addToHistory(text,json.translation);
+        // Word card: fire for single words / very short phrases
+        if (isOneWord(text)) showWordCard(text); else hideWordCard();
       } catch(err) { if(err.name==="AbortError") return; setOutput("⚠ Network error. Please try again.",false,false); setStatus("error"); }
     }
 
@@ -973,6 +1000,70 @@
         setTimeout(() => { btn.textContent = "↗"; btn.classList.remove("copied"); }, 1800);
       }
     });
+
+    // ── Word Card ──
+    const wordCard = document.getElementById("wordCard");
+    let wcAbort = null;
+
+    function isOneWord(text) {
+      // Trigger for single words or very short phrases (≤ 2 words, ≤ 28 chars, no sentence punctuation)
+      const t = text.trim();
+      return t.length <= 28 && t.split(/\s+/).length <= 2 && !/[.!?،。！？؟]/.test(t);
+    }
+
+    function hideWordCard() {
+      wordCard.style.display = "none";
+      wordCard.innerHTML = "";
+    }
+
+    async function showWordCard(word) {
+      if (wcAbort) wcAbort.abort();
+      wcAbort = new AbortController();
+      wordCard.style.display = "block";
+      wordCard.innerHTML = `<div class="wc-loading"><div class="wc-spinner"></div> Looking up <em>${escHtml(word)}</em>…</div>`;
+
+      try {
+        const sl = srcLang === "auto" ? (detectedLang || "English") : langs[srcLang].label;
+        const res = await fetch("/api/wordcard", {
+          method: "POST", headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ word, srcLang: sl, tgtLang: langs[tgtLang].label }),
+          signal: wcAbort.signal
+        });
+        const d = await res.json();
+        if (d.error) { hideWordCard(); return; }
+
+        const tl = langs[tgtLang];
+        const sl2 = srcLang === "auto" ? "auto" : srcLang;
+        const slLang = langs[sl2 === "auto" ? "en" : sl2];
+
+        wordCard.innerHTML = `
+          <div class="wc-top">
+            <div class="wc-left">
+              <div class="wc-word">${escHtml(word)}</div>
+              ${d.partOfSpeech ? `<div class="wc-pos">${escHtml(d.partOfSpeech)}</div>` : ""}
+            </div>
+            <div class="wc-right">
+              <div class="wc-translation">${escHtml(d.translation || "")}</div>
+              <div class="wc-tl-label">${tl.flag} ${tl.label}</div>
+            </div>
+          </div>
+          <div class="wc-divider"></div>
+          <div class="wc-body">
+            ${d.definition ? `<div><div class="wc-section-label">Definition</div><div class="wc-definition">${escHtml(d.definition)}</div></div>` : ""}
+            ${d.example ? `<div><div class="wc-section-label">Example</div><div class="wc-example">${escHtml(d.example)}</div></div>` : ""}
+            ${d.synonyms?.length ? `<div><div class="wc-section-label">Synonyms</div><div class="wc-synonyms">${d.synonyms.map(s=>`<span class="wc-syn">${escHtml(s)}</span>`).join("")}</div></div>` : ""}
+          </div>`;
+
+        // Clicking a synonym fills input + re-translates
+        wordCard.querySelectorAll(".wc-syn").forEach(el => el.addEventListener("click", () => {
+          inputText.value = el.textContent;
+          updateCharCount();
+          triggerTranslation();
+          inputText.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }));
+
+      } catch (e) { if (e.name !== "AbortError") hideWordCard(); }
+    }
 
     // ── Live Conversation ──
     let convOpen = false, convAutoSwitch = false;
