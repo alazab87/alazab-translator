@@ -4,6 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Alazab Translator</title>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#6c63ff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Alazab" />
+  <link rel="apple-touch-icon" href="/icon.svg" />
+  <meta name="description" content="Smart real-time AI translation powered by Claude — 9 languages, voice, camera, and more." />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -184,12 +191,30 @@
     .conv-auto-btn.active { background: rgba(108,99,255,0.18); border-color: var(--accent); color: var(--accent2); }
     .conv-auto-label { font-size: 0.6rem; color: var(--text-muted); }
 
+    /* ── Install banner ── */
+    .install-banner { display: none; align-items: center; gap: 0.75rem; padding: 0.65rem 1rem; background: linear-gradient(135deg,rgba(108,99,255,0.18),rgba(167,139,250,0.12)); border-bottom: 1px solid var(--accent); font-size: 0.82rem; }
+    .install-banner.show { display: flex; }
+    .install-banner-text { flex: 1; color: var(--text); }
+    .install-banner-text strong { color: var(--accent2); }
+    .install-banner-btn { background: var(--accent); color: #fff; border: none; border-radius: 1rem; padding: 0.32rem 0.9rem; font-size: 0.78rem; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+    .install-banner-dismiss { background: none; border: none; color: var(--text-muted); font-size: 1rem; cursor: pointer; padding: 0.1rem 0.2rem; line-height: 1; }
+
     /* ── Footer ── */
     footer { text-align: center; padding: 0.8rem; font-size: 0.72rem; color: var(--text-muted); border-top: 1px solid var(--border); }
     footer strong { color: var(--accent2); }
   </style>
 </head>
 <body>
+
+  <!-- PWA install banner -->
+  <div class="install-banner" id="installBanner">
+    <span style="font-size:1.3rem">🌐</span>
+    <span class="install-banner-text" id="installBannerText">
+      <strong>Install Alazab Translator</strong> — use it like an app, works offline too!
+    </span>
+    <button class="install-banner-btn" id="installBtn">Install</button>
+    <button class="install-banner-dismiss" id="installDismiss" title="Dismiss">✕</button>
+  </div>
 
   <header>
     <button class="theme-btn" id="themeBtn" title="Toggle light/dark mode">🌙</button>
@@ -848,6 +873,46 @@
     document.getElementById("historyClearBtn").addEventListener("click",()=>{ translHistory=[]; localStorage.removeItem("alazabHistory"); renderHistory(); });
 
     function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+    // ── PWA: Service Worker + Install prompt ──
+    let deferredInstallPrompt = null;
+    const installBanner = document.getElementById("installBanner");
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+
+    // Android/Chrome: capture the install prompt
+    window.addEventListener("beforeinstallprompt", e => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      if (!localStorage.getItem("pwaInstallDismissed")) {
+        installBanner.classList.add("show");
+      }
+    });
+
+    document.getElementById("installBtn").addEventListener("click", async () => {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const { outcome } = await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+        installBanner.classList.remove("show");
+      }
+    });
+
+    document.getElementById("installDismiss").addEventListener("click", () => {
+      installBanner.classList.remove("show");
+      localStorage.setItem("pwaInstallDismissed", "1");
+    });
+
+    // iOS Safari: show manual instructions hint
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isInStandalone = window.navigator.standalone;
+    if (isIos && !isInStandalone && !localStorage.getItem("pwaInstallDismissed")) {
+      document.getElementById("installBannerText").innerHTML =
+        `<strong>Install on iPhone:</strong> tap <strong>Share ↑</strong> then <strong>"Add to Home Screen"</strong>`;
+      installBanner.classList.add("show");
+    }
 
     // ── Theme toggle (Light / Dark) ──
     const themeBtn = document.getElementById("themeBtn");

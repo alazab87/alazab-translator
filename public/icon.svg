@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="110" fill="#1a1d2e"/>
+  <!-- Globe circle -->
+  <circle cx="256" cy="230" r="150" fill="none" stroke="#6c63ff" stroke-width="18"/>
+  <!-- Vertical oval (longitude) -->
+  <ellipse cx="256" cy="230" rx="65" ry="150" fill="none" stroke="#6c63ff" stroke-width="14"/>
+  <!-- Horizontal lines (latitude) -->
+  <line x1="110" y1="180" x2="402" y2="180" stroke="#6c63ff" stroke-width="14" stroke-linecap="round"/>
+  <line x1="106" y1="230" x2="406" y2="230" stroke="#6c63ff" stroke-width="14" stroke-linecap="round"/>
+  <line x1="110" y1="280" x2="402" y2="280" stroke="#6c63ff" stroke-width="14" stroke-linecap="round"/>
+  <!-- Translate arrows at bottom -->
+  <path d="M148 420 L200 390 L200 410 L312 410 L312 390 L364 420 L312 450 L312 430 L200 430 L200 450 Z" fill="#a78bfa"/>
+</svg>
