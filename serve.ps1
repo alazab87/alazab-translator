@@ -106,6 +106,21 @@ try {
             continue
         }
 
+        # ── /api/romanize ──
+        if ($req.HttpMethod -eq "POST" -and $req.Url.LocalPath -eq "/api/romanize") {
+            try {
+                $reader = New-Object System.IO.StreamReader($req.InputStream, [System.Text.Encoding]::UTF8)
+                $data   = $reader.ReadToEnd() | ConvertFrom-Json
+                $sys = "Provide the romanization (pronunciation guide using Latin alphabet) of the following $($data.lang) text. Output ONLY the romanization, nothing else — no explanations, no original script."
+                $roman = Invoke-Claude $sys $data.text 500
+                Write-Resp $resp "application/json" (ConvertTo-Json @{ romanization = $roman.Trim() })
+            } catch {
+                $resp.StatusCode = 500
+                Write-Resp $resp "application/json" (ConvertTo-Json @{ error = $_.Exception.Message })
+            }
+            continue
+        }
+
         # ── /api/alternatives ──
         if ($req.HttpMethod -eq "POST" -and $req.Url.LocalPath -eq "/api/alternatives") {
             try {

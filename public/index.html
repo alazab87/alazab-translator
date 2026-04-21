@@ -286,6 +286,7 @@
     let debounceTimer = null, abortController = null;
     let openDropdown = null, isListening = false, altPopup = null;
     let docMode = false, currentPbCat = Object.keys(phrasebook)[0];
+    const pbCache = {}; // key: `${cat}|${langCode}` → translated string[]
     let translHistory = JSON.parse(localStorage.getItem("alazabHistory")    || "[]");
     let favorites     = JSON.parse(localStorage.getItem("alazabFavorites")  || "[]");
 
@@ -338,6 +339,7 @@
         }
         if (openDropdown) { openDropdown.classList.remove("open"); openDropdown=null; }
         updateLangUI(); buildDropdowns();
+        renderPbPhrases(); // re-translate phrasebook chips for new language
         if (inputText.value.trim()) triggerTranslation();
         return;
       }
@@ -433,6 +435,9 @@
           wordEl.classList.remove("selected");
           currentTranslation=getOutputText();
           closeAltPopup();
+          // Re-romanize if the target language needs it
+          const needsRoman=["Arabic","Chinese","Japanese"].includes(langs[tgtLang].label);
+          if (needsRoman) reRomanize(currentTranslation);
         }));
       } catch { closeAltPopup(); }
     }
@@ -440,6 +445,17 @@
     function closeAltPopup() {
       if (altPopup) { altPopup.remove(); altPopup=null; }
       document.querySelectorAll(".word-chip.selected").forEach(s=>s.classList.remove("selected"));
+    }
+
+    // Re-romanize the output after a word has been swapped via alternatives
+    async function reRomanize(text) {
+      const romanEl = document.getElementById("romanizationText");
+      romanEl.textContent = "🔤 …"; romanEl.style.display = "block";
+      try {
+        const res = await fetch("/api/romanize",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,lang:langs[tgtLang].label})});
+        const json = await res.json();
+        if (json.romanization) romanEl.textContent = "🔤 "+json.romanization;
+      } catch { romanEl.style.display = "none"; }
     }
 
     // ── Formality ──
@@ -454,7 +470,7 @@
       const prev=getOutputText();
       if (srcLang==="auto") { const nTgt=Object.entries(langs).find(([k,v])=>v.label===detectedLang)?.[0]||"en"; srcLang=tgtLang; tgtLang=nTgt; }
       else [srcLang,tgtLang]=[tgtLang,srcLang];
-      detectedLang=null; updateLangUI(); buildDropdowns();
+      detectedLang=null; updateLangUI(); buildDropdowns(); renderPbPhrases();
       if (prev) { inputText.value=prev; updateCharCount(); triggerTranslation(); } else setOutput("",true);
     });
 
@@ -539,11 +555,51 @@
       ).join("");
       renderPbPhrases();
     }
-    function renderPbPhrases() {
-      document.getElementById("pbPhrases").innerHTML=phrasebook[currentPbCat].map(p=>
-        `<span class="pb-chip" data-text="${escHtml(p)}">${p}</span>`
-      ).join("");
+
+    // Translate a list of English phrases to the given target language in one API call.
+    // Returns a string[] in the same order. Falls back to original phrases on error.
+    async function translatePhrases(phrases, targetLangLabel) {
+      const numbered = phrases.map((p,i)=>`${i+1}. ${p}`).join("\n");
+      const res = await fetch("/api/translate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:numbered,srcLang:"English",tgtLang:targetLangLabel,formality:"neutral"})});
+      const json = await res.json();
+      if (json.error) throw new Error(json.error);
+      // Parse numbered lines back
+      const raw = json.translation.split("\n").map(l=>l.trim()).filter(Boolean);
+      const parsed = raw.map(l=>l.replace(/^\d+[\.\)]\s*/,"").trim());
+      // Accept if we got the right count; otherwise fall back
+      return parsed.length===phrases.length ? parsed : phrases;
     }
+
+    function renderPbChips(el, cat, translations) {
+      el.innerHTML = phrasebook[cat].map((p,i)=>{
+        const t = translations[i]||p;
+        return `<span class="pb-chip" data-text="${escHtml(p)}" title="EN: ${escHtml(p)}">${escHtml(t)}</span>`;
+      }).join("");
+    }
+
+    async function renderPbPhrases() {
+      const cat = currentPbCat, lang = tgtLang;
+      const el = document.getElementById("pbPhrases");
+      // English target — show phrases directly, no translation needed
+      if (lang === "en") {
+        el.innerHTML = phrasebook[cat].map(p=>`<span class="pb-chip" data-text="${escHtml(p)}">${escHtml(p)}</span>`).join("");
+        return;
+      }
+      const key = `${cat}|${lang}`;
+      if (pbCache[key]) { renderPbChips(el, cat, pbCache[key]); return; }
+      // Show loading while translating
+      el.innerHTML=`<span style="color:var(--text-muted);font-size:0.8rem;padding:0.3rem 0">Translating to ${langs[lang].label}…</span>`;
+      try {
+        const translations = await translatePhrases(phrasebook[cat], langs[lang].label);
+        pbCache[key] = translations;
+        // Only render if user hasn't switched category/language in the meantime
+        if (currentPbCat===cat && tgtLang===lang) renderPbChips(el, cat, translations);
+      } catch {
+        if (currentPbCat===cat && tgtLang===lang)
+          el.innerHTML = phrasebook[cat].map(p=>`<span class="pb-chip" data-text="${escHtml(p)}">${escHtml(p)}</span>`).join("");
+      }
+    }
+
     document.getElementById("pbTabs").addEventListener("click",e=>{
       if (!e.target.classList.contains("pb-tab")) return;
       currentPbCat=e.target.dataset.cat;
