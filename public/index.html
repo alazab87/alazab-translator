@@ -139,6 +139,41 @@
     .fav-remove { background: none; border: none; color: var(--text-muted); font-size: 0.85rem; cursor: pointer; padding: 0.1rem 0.25rem; border-radius: 0.3rem; flex-shrink: 0; transition: color 0.15s; line-height: 1; margin-top: 0.1rem; }
     .fav-remove:hover { color: var(--danger); }
 
+    /* ── Live Conversation ── */
+    .conv-toggle-bar { display: flex; justify-content: center; }
+    .conv-toggle-btn { display: flex; align-items: center; gap: 0.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 2rem; padding: 0.42rem 1.3rem; font-size: 0.82rem; color: var(--text-muted); cursor: pointer; font-family: inherit; font-weight: 500; transition: all 0.2s; }
+    .conv-toggle-btn:hover { border-color: var(--accent); color: var(--accent2); }
+    .conv-toggle-btn.active { background: rgba(108,99,255,0.15); border-color: var(--accent); color: var(--accent2); }
+    .conv-live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); transition: background 0.2s; flex-shrink: 0; }
+    .conv-toggle-btn.active .conv-live-dot { background: var(--danger); animation: pulse 0.9s ease-in-out infinite; }
+    .conv-section { background: var(--surface); border: 1px solid var(--accent); border-radius: 1rem; overflow: hidden; box-shadow: 0 0 0 3px var(--glow); }
+    .conv-top-bar { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-muted); }
+    .conv-messages { min-height: 200px; max-height: 400px; overflow-y: auto; padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.7rem; }
+    .conv-messages::-webkit-scrollbar { width: 4px; }
+    .conv-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .conv-empty { color: var(--text-muted); font-size: 0.82rem; font-style: italic; text-align: center; padding: 2rem 1rem; align-self: center; }
+    .conv-bubble { max-width: 80%; display: flex; flex-direction: column; gap: 0.15rem; }
+    .conv-bubble.left { align-self: flex-start; }
+    .conv-bubble.right { align-self: flex-end; align-items: flex-end; }
+    .conv-lang-label { font-size: 0.68rem; color: var(--text-muted); padding: 0 0.4rem; }
+    .conv-inner { padding: 0.55rem 0.9rem; border-radius: 1rem; }
+    .conv-bubble.left .conv-inner { background: var(--surface2); border-bottom-left-radius: 0.2rem; }
+    .conv-bubble.right .conv-inner { background: rgba(108,99,255,0.2); border-bottom-right-radius: 0.2rem; }
+    .conv-orig { font-size: 0.9rem; color: var(--text); line-height: 1.45; }
+    .conv-orig.interim { opacity: 0.55; font-style: italic; }
+    .conv-trans { font-size: 0.83rem; color: var(--accent2); margin-top: 0.3rem; line-height: 1.4; }
+    .conv-pending { font-size: 0.76rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .conv-controls { display: flex; align-items: center; gap: 0.55rem; padding: 0.7rem 0.85rem; border-top: 1px solid var(--border); background: var(--surface2); }
+    .conv-mic-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.28rem; background: var(--surface); border: 1px solid var(--border); border-radius: 0.85rem; padding: 0.6rem 0.4rem; cursor: pointer; font-family: inherit; color: var(--text-muted); transition: all 0.18s; }
+    .conv-mic-btn:hover { border-color: var(--accent); color: var(--text); background: rgba(108,99,255,0.08); }
+    .conv-mic-btn.listening { border-color: var(--danger); background: rgba(248,113,113,0.1); color: var(--danger); animation: pulse 0.7s ease-in-out infinite; }
+    .conv-mic-icon { font-size: 1.35rem; line-height: 1; }
+    .conv-mic-label { font-size: 0.7rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .conv-center { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+    .conv-auto-btn { background: none; border: 1px solid var(--border); border-radius: 0.55rem; color: var(--text-muted); font-size: 0.68rem; padding: 0.25rem 0.55rem; cursor: pointer; font-family: inherit; transition: all 0.15s; white-space: nowrap; }
+    .conv-auto-btn.active { background: rgba(108,99,255,0.18); border-color: var(--accent); color: var(--accent2); }
+    .conv-auto-label { font-size: 0.6rem; color: var(--text-muted); }
+
     /* ── Footer ── */
     footer { text-align: center; padding: 0.8rem; font-size: 0.72rem; color: var(--text-muted); border-top: 1px solid var(--border); }
     footer strong { color: var(--accent2); }
@@ -224,6 +259,38 @@
           <span id="altHint" style="font-size:0.7rem;opacity:0">💡 Click any word for alternatives</span>
           <span id="outCharCount">0 chars</span>
         </div>
+      </div>
+    </div>
+
+    <!-- Live Conversation toggle -->
+    <div class="conv-toggle-bar">
+      <button class="conv-toggle-btn" id="convToggleBtn">
+        <span class="conv-live-dot"></span> 💬 Live Conversation
+      </button>
+    </div>
+
+    <!-- Live Conversation panel -->
+    <div class="conv-section" id="convSection" style="display:none">
+      <div class="conv-top-bar">
+        <span>💬 Live Conversation</span>
+        <button class="section-clear-btn" id="convClearBtn">Clear</button>
+      </div>
+      <div class="conv-messages" id="convMessages">
+        <div class="conv-empty">Tap a mic button below to start speaking</div>
+      </div>
+      <div class="conv-controls">
+        <button class="conv-mic-btn" id="convMicSrc">
+          <span class="conv-mic-icon">🎤</span>
+          <span class="conv-mic-label" id="convMicSrcLabel">English</span>
+        </button>
+        <div class="conv-center">
+          <button class="conv-auto-btn" id="convAutoBtn" title="Auto-switch to the other person after each message">⇄ Auto</button>
+          <span class="conv-auto-label">switch</span>
+        </div>
+        <button class="conv-mic-btn" id="convMicTgt">
+          <span class="conv-mic-icon">🎤</span>
+          <span class="conv-mic-label" id="convMicTgtLabel">Spanish</span>
+        </button>
       </div>
     </div>
 
@@ -339,7 +406,7 @@
         }
         if (openDropdown) { openDropdown.classList.remove("open"); openDropdown=null; }
         updateLangUI(); buildDropdowns();
-        renderPbPhrases(); // re-translate phrasebook chips for new language
+        renderPbPhrases(); updateConvMicLabels();
         if (inputText.value.trim()) triggerTranslation();
         return;
       }
@@ -470,7 +537,7 @@
       const prev=getOutputText();
       if (srcLang==="auto") { const nTgt=Object.entries(langs).find(([k,v])=>v.label===detectedLang)?.[0]||"en"; srcLang=tgtLang; tgtLang=nTgt; }
       else [srcLang,tgtLang]=[tgtLang,srcLang];
-      detectedLang=null; updateLangUI(); buildDropdowns(); renderPbPhrases();
+      detectedLang=null; updateLangUI(); buildDropdowns(); renderPbPhrases(); updateConvMicLabels();
       if (prev) { inputText.value=prev; updateCharCount(); triggerTranslation(); } else setOutput("",true);
     });
 
@@ -768,8 +835,161 @@
 
     function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
+    // ── Live Conversation ──
+    let convOpen = false, convAutoSwitch = false;
+    let convRec = null, convListeningWhich = null;
+    const convMessagesEl = document.getElementById("convMessages");
+
+    function updateConvMicLabels() {
+      const sl = srcLang === "auto" ? "en" : srcLang;
+      document.getElementById("convMicSrcLabel").textContent = langs[sl].label;
+      document.getElementById("convMicTgtLabel").textContent = langs[tgtLang].label;
+    }
+
+    document.getElementById("convToggleBtn").addEventListener("click", () => {
+      convOpen = !convOpen;
+      document.getElementById("convSection").style.display = convOpen ? "block" : "none";
+      document.getElementById("convToggleBtn").classList.toggle("active", convOpen);
+      if (!convOpen) { stopConvListen(); }
+      updateConvMicLabels();
+      if (convOpen) document.getElementById("convSection").scrollIntoView({behavior:"smooth",block:"nearest"});
+    });
+
+    document.getElementById("convAutoBtn").addEventListener("click", e => {
+      convAutoSwitch = !convAutoSwitch;
+      e.currentTarget.classList.toggle("active", convAutoSwitch);
+    });
+
+    document.getElementById("convClearBtn").addEventListener("click", () => {
+      convMessagesEl.innerHTML = '<div class="conv-empty">Tap a mic button below to start speaking</div>';
+    });
+
+    document.getElementById("convMicSrc").addEventListener("click", () => toggleConvListen("src"));
+    document.getElementById("convMicTgt").addEventListener("click", () => toggleConvListen("tgt"));
+
+    function stopConvListen() {
+      if (convRec) { try { convRec.stop(); } catch(e){} convRec = null; }
+      convListeningWhich = null;
+      updateConvMicUI();
+    }
+
+    function toggleConvListen(which) {
+      if (!SpeechRecognition) { alert("Speech recognition not supported in this browser."); return; }
+      // If already listening on this side, stop
+      if (convListeningWhich === which) { stopConvListen(); return; }
+      stopConvListen();
+      const langCode = which === "src" ? (srcLang === "auto" ? "en" : srcLang) : tgtLang;
+      convListeningWhich = which;
+      updateConvMicUI();
+
+      const rec = new SpeechRecognition();
+      rec.lang = langs[langCode].speech;
+      rec.continuous = false;
+      rec.interimResults = true;
+      convRec = rec;
+
+      let interimId = null;
+
+      rec.onresult = e => {
+        const transcript = Array.from(e.results).map(r => r[0].transcript).join("");
+        const isFinal = e.results[e.results.length-1].isFinal;
+        if (!isFinal) {
+          if (!interimId) { interimId = "interim-"+Date.now(); addConvBubble(interimId, which, transcript, null, true); }
+          else updateConvBubbleOrig(interimId, transcript, true);
+        } else {
+          if (interimId) { removeConvBubble(interimId); interimId = null; }
+          convListeningWhich = null; updateConvMicUI(); convRec = null;
+          finishConvMessage(which, transcript);
+        }
+      };
+
+      rec.onend = () => {
+        if (interimId) { removeConvBubble(interimId); interimId = null; }
+        convListeningWhich = null; updateConvMicUI(); convRec = null;
+      };
+
+      rec.onerror = e => {
+        if (interimId) { removeConvBubble(interimId); interimId = null; }
+        convListeningWhich = null; updateConvMicUI(); convRec = null;
+        if (e.error === "not-allowed") alert("Microphone permission denied.");
+      };
+
+      rec.start();
+    }
+
+    async function finishConvMessage(which, text) {
+      const fromCode = which === "src" ? (srcLang === "auto" ? "en" : srcLang) : tgtLang;
+      const toCode   = which === "src" ? tgtLang : (srcLang === "auto" ? "en" : srcLang);
+      const msgId = "msg-"+Date.now();
+
+      addConvBubble(msgId, which, text, null, false);
+
+      try {
+        const res = await fetch("/api/translate",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({text, srcLang:langs[fromCode].label, tgtLang:langs[toCode].label, formality})});
+        const json = await res.json();
+        if (json.translation) {
+          updateConvBubbleTrans(msgId, langs[toCode].flag+" "+json.translation);
+          // Speak the translation aloud
+          const speak = () => {
+            if (!window.speechSynthesis) return afterSpeak();
+            const u = new SpeechSynthesisUtterance(json.translation);
+            u.lang = langs[toCode].speech; u.rate = 0.95;
+            u.onend = u.onerror = afterSpeak;
+            window.speechSynthesis.speak(u);
+          };
+          const afterSpeak = () => {
+            if (convAutoSwitch && convOpen && !convListeningWhich)
+              setTimeout(() => toggleConvListen(which === "src" ? "tgt" : "src"), 500);
+          };
+          speak();
+        } else {
+          updateConvBubbleTrans(msgId, "⚠ Translation failed");
+        }
+      } catch {
+        updateConvBubbleTrans(msgId, "⚠ Network error");
+      }
+    }
+
+    function addConvBubble(id, which, orig, trans, isInterim) {
+      const empty = convMessagesEl.querySelector(".conv-empty");
+      if (empty) empty.remove();
+      const fromCode = which === "src" ? (srcLang === "auto" ? "en" : srcLang) : tgtLang;
+      const side = which === "src" ? "left" : "right";
+      const div = document.createElement("div");
+      div.className = `conv-bubble ${side}`; div.id = id;
+      div.innerHTML = `<div class="conv-lang-label">${langs[fromCode].flag} ${langs[fromCode].label}</div>
+        <div class="conv-inner">
+          <div class="conv-orig${isInterim?" interim":""}" id="${id}-orig">${escHtml(orig)}</div>
+          <div class="conv-pending" id="${id}-trans">${isInterim?"":"Translating…"}</div>
+        </div>`;
+      convMessagesEl.appendChild(div);
+      convMessagesEl.scrollTop = convMessagesEl.scrollHeight;
+    }
+
+    function updateConvBubbleOrig(id, text, isInterim) {
+      const el = document.getElementById(id+"-orig");
+      if (el) { el.textContent = text; el.className = "conv-orig"+(isInterim?" interim":""); }
+      convMessagesEl.scrollTop = convMessagesEl.scrollHeight;
+    }
+
+    function updateConvBubbleTrans(id, text) {
+      const el = document.getElementById(id+"-trans");
+      if (el) { el.className = "conv-trans"; el.textContent = text; }
+      convMessagesEl.scrollTop = convMessagesEl.scrollHeight;
+    }
+
+    function removeConvBubble(id) {
+      const el = document.getElementById(id); if (el) el.remove();
+    }
+
+    function updateConvMicUI() {
+      document.getElementById("convMicSrc").classList.toggle("listening", convListeningWhich==="src");
+      document.getElementById("convMicTgt").classList.toggle("listening", convListeningWhich==="tgt");
+    }
+
     // ── Init ──
-    buildDropdowns(); updateLangUI(); buildPhrasebook(); renderHistory(); renderFavorites();
+    buildDropdowns(); updateLangUI(); buildPhrasebook(); renderHistory(); renderFavorites(); updateConvMicLabels();
   </script>
 </body>
 </html>
