@@ -13,10 +13,20 @@
       --success: #34d399; --danger: #f87171; --gold: #f5c518;
       --glow: rgba(108,99,255,0.15);
     }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    /* ── Light mode ── */
+    body.light {
+      --bg: #f0f2fa; --surface: #ffffff; --surface2: #e8eaf5;
+      --border: #c8cbe8; --accent: #6c63ff; --accent2: #4f46e5;
+      --text: #1a1b2e; --text-muted: #6b6c88;
+      --success: #16a34a; --danger: #dc2626; --gold: #b45309;
+      --glow: rgba(108,99,255,0.12);
+    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; transition: background 0.25s, color 0.25s; }
 
     /* ── Header ── */
-    header { text-align: center; padding: 1.6rem 1rem 1rem; background: linear-gradient(180deg,rgba(108,99,255,0.08) 0%,transparent 100%); border-bottom: 1px solid var(--border); }
+    header { text-align: center; padding: 1.4rem 1rem 0.9rem; background: linear-gradient(180deg,rgba(108,99,255,0.08) 0%,transparent 100%); border-bottom: 1px solid var(--border); position: relative; }
+    .theme-btn { position: absolute; top: 1rem; right: 1rem; background: none; border: 1px solid var(--border); border-radius: 50%; width: 2.1rem; height: 2.1rem; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; transition: all 0.2s; color: var(--text-muted); }
+    .theme-btn:hover { border-color: var(--accent); background: rgba(108,99,255,0.1); }
     .logo { display: inline-flex; align-items: center; gap: 0.6rem; font-size: 1.9rem; font-weight: 700; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.5px; }
     .logo-icon { font-size: 2rem; -webkit-text-fill-color: initial; }
     .tagline { color: var(--text-muted); font-size: 0.82rem; margin-top: 0.3rem; letter-spacing: 0.5px; }
@@ -182,6 +192,7 @@
 <body>
 
   <header>
+    <button class="theme-btn" id="themeBtn" title="Toggle light/dark mode">🌙</button>
     <div class="logo"><span class="logo-icon">🌐</span> Alazab Translator</div>
     <p class="tagline">Smart · Direct · Accurate · Instant</p>
   </header>
@@ -221,12 +232,14 @@
         <div class="panel-header">
           <span id="inputLangLabel">English</span>
           <div class="panel-actions">
+            <button class="icon-btn" id="cameraBtn" title="Translate text from a photo or image">📷</button>
             <button class="icon-btn" id="docBtn" title="Upload document (.txt .pdf .docx)">📎</button>
             <button class="icon-btn" id="micBtn" title="Speak to translate">🎤</button>
             <button class="icon-btn" id="clearBtn" title="Clear">✕</button>
           </div>
         </div>
         <input type="file" id="docInput" accept=".txt,.pdf,.docx" style="display:none">
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
         <textarea id="inputText" placeholder="Type here…" spellcheck="true" autofocus></textarea>
         <div class="doc-banner" id="docBanner">
           <span id="docBannerName"></span>
@@ -248,6 +261,7 @@
           <span id="outputLangLabel">Spanish</span>
           <div class="panel-actions">
             <button class="icon-btn" id="dlBtn" title="Download translation" style="display:none">📥</button>
+            <button class="icon-btn" id="shareBtn" title="Share translation">↗</button>
             <button class="icon-btn" id="copyBtn" title="Copy">⧉</button>
             <button class="icon-btn" id="starBtn" title="Save to favorites">☆</button>
             <button class="icon-btn" id="speakBtn" title="Listen">🔊</button>
@@ -834,6 +848,66 @@
     document.getElementById("historyClearBtn").addEventListener("click",()=>{ translHistory=[]; localStorage.removeItem("alazabHistory"); renderHistory(); });
 
     function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+    // ── Theme toggle (Light / Dark) ──
+    const themeBtn = document.getElementById("themeBtn");
+    let isLight = localStorage.getItem("alazabTheme") === "light";
+    function applyTheme() {
+      document.body.classList.toggle("light", isLight);
+      themeBtn.textContent = isLight ? "🌙" : "☀️";
+      themeBtn.title = isLight ? "Switch to dark mode" : "Switch to light mode";
+    }
+    applyTheme();
+    themeBtn.addEventListener("click", () => {
+      isLight = !isLight;
+      localStorage.setItem("alazabTheme", isLight ? "light" : "dark");
+      applyTheme();
+    });
+
+    // ── Camera / Image OCR ──
+    const cameraInput = document.getElementById("cameraInput");
+    document.getElementById("cameraBtn").addEventListener("click", () => cameraInput.click());
+    cameraInput.addEventListener("change", async e => {
+      const file = e.target.files[0]; if (!file) return;
+      cameraInput.value = "";
+      const reader = new FileReader();
+      reader.onload = async ev => {
+        const dataUrl = ev.target.result;
+        const base64 = dataUrl.split(",")[1];
+        const mediaType = file.type || "image/jpeg";
+        setStatus("translating");
+        setOutput("", false, true);
+        try {
+          const res = await fetch("/api/vision", {
+            method: "POST", headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({ imageBase64: base64, mediaType })
+          });
+          const json = await res.json();
+          if (json.error) { setOutput("⚠ "+json.error, false, false); setStatus("error"); return; }
+          inputText.value = json.extractedText;
+          updateCharCount();
+          triggerTranslation();
+        } catch { setOutput("⚠ Network error. Please try again.", false, false); setStatus("error"); }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // ── Share ──
+    document.getElementById("shareBtn").addEventListener("click", async () => {
+      const src = inputText.value.trim(), tgt = getOutputText();
+      if (!tgt) return;
+      const sl = langs[srcLang === "auto" ? (Object.entries(langs).find(([k,v])=>v.label===detectedLang)?.[0]||"en") : srcLang];
+      const tl = langs[tgtLang];
+      const shareText = `${sl.flag} ${sl.label} → ${tl.flag} ${tl.label}\n\n${src}\n\n${tgt}`;
+      const btn = document.getElementById("shareBtn");
+      if (navigator.share) {
+        try { await navigator.share({ title: "Alazab Translator", text: shareText }); } catch {}
+      } else {
+        await navigator.clipboard.writeText(shareText).catch(()=>{});
+        btn.textContent = "✓"; btn.classList.add("copied");
+        setTimeout(() => { btn.textContent = "↗"; btn.classList.remove("copied"); }, 1800);
+      }
+    });
 
     // ── Live Conversation ──
     let convOpen = false, convAutoSwitch = false;

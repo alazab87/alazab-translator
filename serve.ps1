@@ -106,6 +106,38 @@ try {
             continue
         }
 
+        # ── /api/vision ──
+        if ($req.HttpMethod -eq "POST" -and $req.Url.LocalPath -eq "/api/vision") {
+            try {
+                $reader = New-Object System.IO.StreamReader($req.InputStream, [System.Text.Encoding]::UTF8)
+                $data   = $reader.ReadToEnd() | ConvertFrom-Json
+                $payload = ConvertTo-Json -Depth 10 @{
+                    model      = "claude-haiku-4-5"
+                    max_tokens = 1024
+                    messages   = @(@{
+                        role    = "user"
+                        content = @(
+                            @{ type = "image"; source = @{ type = "base64"; media_type = $data.mediaType; data = $data.imageBase64 } },
+                            @{ type = "text";  text   = "Extract all text visible in this image exactly as it appears. Output ONLY the raw text, nothing else. If there is no text, output exactly: NO_TEXT" }
+                        )
+                    })
+                }
+                $headers = @{ "x-api-key" = $apiKey; "anthropic-version" = "2023-06-01"; "content-type" = "application/json" }
+                $webResp = Invoke-WebRequest -Uri "https://api.anthropic.com/v1/messages" -Method POST -Headers $headers -Body $payload -UseBasicParsing
+                $raw     = [System.Text.Encoding]::UTF8.GetString($webResp.RawContentStream.ToArray())
+                $extracted = ($raw | ConvertFrom-Json).content[0].text.Trim()
+                if ($extracted -eq "NO_TEXT" -or $extracted -eq "") {
+                    Write-Resp $resp "application/json" (ConvertTo-Json @{ error = "No text found in this image" })
+                } else {
+                    Write-Resp $resp "application/json" (ConvertTo-Json @{ extractedText = $extracted })
+                }
+            } catch {
+                $resp.StatusCode = 500
+                Write-Resp $resp "application/json" (ConvertTo-Json @{ error = $_.Exception.Message })
+            }
+            continue
+        }
+
         # ── /api/romanize ──
         if ($req.HttpMethod -eq "POST" -and $req.Url.LocalPath -eq "/api/romanize") {
             try {
