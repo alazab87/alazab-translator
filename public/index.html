@@ -573,29 +573,32 @@
     function renderPbChips(el, cat, translations) {
       el.innerHTML = phrasebook[cat].map((p,i)=>{
         const t = translations[i]||p;
-        return `<span class="pb-chip" data-text="${escHtml(p)}" title="EN: ${escHtml(p)}">${escHtml(t)}</span>`;
+        // data-text holds the phrase in the source language (used when clicked)
+        return `<span class="pb-chip" data-text="${escHtml(t)}" title="EN: ${escHtml(p)}">${escHtml(t)}</span>`;
       }).join("");
     }
 
     async function renderPbPhrases() {
-      const cat = currentPbCat, lang = tgtLang;
+      const cat = currentPbCat;
+      // Use srcLang for phrasebook — "auto" treated as English
+      const effectiveSrc = (srcLang === "auto" || srcLang === "en") ? "en" : srcLang;
       const el = document.getElementById("pbPhrases");
-      // English target — show phrases directly, no translation needed
-      if (lang === "en") {
+      // Source is English — show phrases directly, no translation needed
+      if (effectiveSrc === "en") {
         el.innerHTML = phrasebook[cat].map(p=>`<span class="pb-chip" data-text="${escHtml(p)}">${escHtml(p)}</span>`).join("");
         return;
       }
-      const key = `${cat}|${lang}`;
+      const key = `${cat}|${effectiveSrc}`;
       if (pbCache[key]) { renderPbChips(el, cat, pbCache[key]); return; }
       // Show loading while translating
-      el.innerHTML=`<span style="color:var(--text-muted);font-size:0.8rem;padding:0.3rem 0">Translating to ${langs[lang].label}…</span>`;
+      el.innerHTML=`<span style="color:var(--text-muted);font-size:0.8rem;padding:0.3rem 0">Loading ${langs[effectiveSrc].label} phrases…</span>`;
       try {
-        const translations = await translatePhrases(phrasebook[cat], langs[lang].label);
+        const translations = await translatePhrases(phrasebook[cat], langs[effectiveSrc].label);
         pbCache[key] = translations;
         // Only render if user hasn't switched category/language in the meantime
-        if (currentPbCat===cat && tgtLang===lang) renderPbChips(el, cat, translations);
+        if (currentPbCat===cat && (srcLang===effectiveSrc||srcLang==="auto"||srcLang==="en")) renderPbChips(el, cat, translations);
       } catch {
-        if (currentPbCat===cat && tgtLang===lang)
+        if (currentPbCat===cat)
           el.innerHTML = phrasebook[cat].map(p=>`<span class="pb-chip" data-text="${escHtml(p)}">${escHtml(p)}</span>`).join("");
       }
     }
@@ -608,7 +611,7 @@
     });
     document.getElementById("pbPhrases").addEventListener("click",e=>{
       if (!e.target.classList.contains("pb-chip")) return;
-      if (srcLang!=="en"&&srcLang!=="auto") { srcLang="en"; updateLangUI(); buildDropdowns(); }
+      // Chip already contains the phrase in the source language — just fill and translate
       inputText.value=e.target.dataset.text; updateCharCount(); triggerTranslation();
     });
 
