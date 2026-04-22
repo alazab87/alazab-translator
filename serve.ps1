@@ -122,6 +122,36 @@ try {
             continue
         }
 
+        # ── /api/ocr-regions ──
+        if ($req.HttpMethod -eq "POST" -and $req.Url.LocalPath -eq "/api/ocr-regions") {
+            try {
+                $reader = New-Object System.IO.StreamReader($req.InputStream, [System.Text.Encoding]::UTF8)
+                $data   = $reader.ReadToEnd() | ConvertFrom-Json
+                $prompt = "Detect every text region in this image and translate each one to $($data.tgtLang).`n`nReturn ONLY a valid JSON array - no markdown:`n[{`"original`":`"text`",`"translation`":`"translated`",`"x`":12,`"y`":8,`"w`":45,`"h`":6}]`n`nx/y=top-left corner as % of image, w/h=size as % of image. If no text, return: []"
+                $payload = ConvertTo-Json -Depth 10 @{
+                    model      = "claude-haiku-4-5"
+                    max_tokens = 2000
+                    messages   = @(@{
+                        role    = "user"
+                        content = @(
+                            @{ type = "image"; source = @{ type = "base64"; media_type = $data.mediaType; data = $data.imageBase64 } },
+                            @{ type = "text"; text = $prompt }
+                        )
+                    })
+                }
+                $headers = @{ "x-api-key" = $apiKey; "anthropic-version" = "2023-06-01"; "content-type" = "application/json" }
+                $webResp  = Invoke-WebRequest -Uri "https://api.anthropic.com/v1/messages" -Method POST -Headers $headers -Body $payload -UseBasicParsing
+                $raw      = [System.Text.Encoding]::UTF8.GetString($webResp.RawContentStream.ToArray())
+                $jsonResp = $raw | ConvertFrom-Json
+                $text     = $jsonResp.content[0].text.Trim() -replace '^```json\s*','' -replace '^```\s*','' -replace '```\s*$',''
+                Write-Resp $resp "application/json" "{`"regions`":$text}"
+            } catch {
+                $resp.StatusCode = 500
+                Write-Resp $resp "application/json" (ConvertTo-Json @{ error = $_.Exception.Message })
+            }
+            continue
+        }
+
         # ── /api/vision ──
         if ($req.HttpMethod -eq "POST" -and $req.Url.LocalPath -eq "/api/vision") {
             try {

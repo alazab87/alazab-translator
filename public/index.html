@@ -250,6 +250,24 @@
     .wc-spinner { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── Image Lens / Overlay ── */
+    .lens-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:700; flex-direction:column; }
+    .lens-modal.show { display:flex; }
+    .lens-header { display:flex; align-items:center; justify-content:space-between; padding:0.7rem 1rem; border-bottom:1px solid #2e3155; flex-shrink:0; }
+    .lens-title { font-size:0.88rem; font-weight:600; color:#a78bfa; display:flex; align-items:center; gap:0.5rem; }
+    .lens-status { font-size:0.72rem; color:#7c7d99; }
+    .lens-header-btns { display:flex; gap:0.4rem; }
+    .lens-btn { background:rgba(108,99,255,0.15); border:1px solid #2e3155; border-radius:0.55rem; color:#a78bfa; font-size:0.78rem; padding:0.3rem 0.75rem; cursor:pointer; font-family:inherit; font-weight:500; transition:all 0.15s; white-space:nowrap; }
+    .lens-btn:hover { background:rgba(108,99,255,0.3); border-color:#6c63ff; }
+    .lens-btn.active { background:rgba(108,99,255,0.35); border-color:#6c63ff; }
+    .lens-btn-close { background:none; border:1px solid #2e3155; border-radius:0.55rem; color:#7c7d99; font-size:0.85rem; padding:0.28rem 0.6rem; cursor:pointer; transition:all 0.15s; }
+    .lens-btn-close:hover { border-color:#f87171; color:#f87171; }
+    .lens-canvas-wrap { flex:1; overflow:auto; display:flex; align-items:center; justify-content:center; padding:0.75rem; min-height:0; }
+    .lens-canvas { max-width:100%; max-height:100%; border-radius:0.5rem; display:block; box-shadow:0 4px 32px rgba(0,0,0,0.6); }
+    .lens-footer { display:flex; align-items:center; justify-content:center; gap:0.75rem; padding:0.7rem 1rem; border-top:1px solid #2e3155; flex-shrink:0; }
+    .lens-spinner { width:16px; height:16px; border:2px solid #2e3155; border-top-color:#6c63ff; border-radius:50%; animation:spin 0.7s linear infinite; }
+    .lens-regions-count { font-size:0.75rem; color:#7c7d99; }
+
     /* ── Install banner ── */
     .install-banner { display: none; align-items: center; gap: 0.75rem; padding: 0.65rem 1rem; background: linear-gradient(135deg,rgba(108,99,255,0.18),rgba(167,139,250,0.12)); border-bottom: 1px solid var(--accent); font-size: 0.82rem; }
     .install-banner.show { display: flex; }
@@ -440,6 +458,28 @@
     </div>
     <div class="stats-grid" id="statsGrid"></div>
     <div class="stats-pairs" id="statsPairs"></div>
+  </div>
+
+  <!-- Image Lens modal -->
+  <div class="lens-modal" id="lensModal">
+    <div class="lens-header">
+      <div class="lens-title">
+        📷 Image Translation
+        <span class="lens-status" id="lensStatus">Processing…</span>
+      </div>
+      <div class="lens-header-btns">
+        <button class="lens-btn" id="lensToggleBtn" title="Show original / translated">👁 Original</button>
+        <button class="lens-btn" id="lensUseTextBtn">Use text in translator →</button>
+        <button class="lens-btn-close" id="lensCloseBtn">✕</button>
+      </div>
+    </div>
+    <div class="lens-canvas-wrap">
+      <canvas id="lensCanvas" class="lens-canvas"></canvas>
+    </div>
+    <div class="lens-footer">
+      <div class="lens-spinner" id="lensSpinner"></div>
+      <span class="lens-regions-count" id="lensRegionsCount"></span>
+    </div>
   </div>
 
   <!-- Keyboard shortcuts modal -->
@@ -1056,30 +1096,153 @@
       applyTheme();
     });
 
-    // ── Camera / Image OCR ──
+    // ── Camera / Image Lens ──
     const cameraInput = document.getElementById("cameraInput");
     document.getElementById("cameraBtn").addEventListener("click", () => cameraInput.click());
+
+    let lensImageSrc = null, lensRegions = [], lensShowingOriginal = false, lensExtractedText = "";
+
+    const lensModal   = document.getElementById("lensModal");
+    const lensCanvas  = document.getElementById("lensCanvas");
+    const lensCtx     = lensCanvas.getContext("2d");
+    const lensSpinner = document.getElementById("lensSpinner");
+
+    function lensSetStatus(msg) { document.getElementById("lensStatus").textContent = msg; }
+
+    document.getElementById("lensCloseBtn").addEventListener("click", () => {
+      lensModal.classList.remove("show");
+    });
+
+    document.getElementById("lensToggleBtn").addEventListener("click", () => {
+      lensShowingOriginal = !lensShowingOriginal;
+      document.getElementById("lensToggleBtn").textContent = lensShowingOriginal ? "👁 Translated" : "👁 Original";
+      document.getElementById("lensToggleBtn").classList.toggle("active", lensShowingOriginal);
+      drawLens(lensShowingOriginal);
+    });
+
+    document.getElementById("lensUseTextBtn").addEventListener("click", () => {
+      if (!lensExtractedText) return;
+      lensModal.classList.remove("show");
+      inputText.value = lensExtractedText;
+      updateCharCount();
+      triggerTranslation();
+    });
+
+    // Wrap text to fit inside a box on the canvas
+    function canvasWrapText(ctx, text, x, y, maxW, maxH, fontSize) {
+      const words = text.split(" ");
+      const lineH = fontSize * 1.25;
+      let line = "", lines = [];
+      for (const w of words) {
+        const test = line + w + " ";
+        if (ctx.measureText(test).width > maxW - 6 && line) { lines.push(line.trim()); line = w + " "; }
+        else line = test;
+      }
+      lines.push(line.trim());
+      // Shrink font until lines fit vertically
+      if (lines.length * lineH > maxH && lines.length > 1) {
+        const shrunk = Math.max(8, Math.floor(maxH / lines.length / 1.25));
+        ctx.font = `600 ${shrunk}px 'Segoe UI',sans-serif`;
+      }
+      const actualLineH = fontSize * 1.25;
+      const startY = y + maxH / 2 - (lines.length * actualLineH) / 2 + actualLineH * 0.5;
+      lines.forEach((l, i) => ctx.fillText(l, x + 4, startY + i * actualLineH, maxW - 8));
+    }
+
+    function drawLens(showOriginal) {
+      const img = new Image();
+      img.onload = () => {
+        lensCanvas.width  = img.naturalWidth;
+        lensCanvas.height = img.naturalHeight;
+        lensCtx.drawImage(img, 0, 0);
+
+        if (!showOriginal) {
+          lensRegions.forEach(r => {
+            const x = r.x / 100 * lensCanvas.width;
+            const y = r.y / 100 * lensCanvas.height;
+            const w = r.w / 100 * lensCanvas.width;
+            const h = r.h / 100 * lensCanvas.height;
+            if (w < 2 || h < 2) return;
+
+            // Cover original text with a dark rounded box
+            lensCtx.fillStyle = "rgba(15,17,35,0.92)";
+            lensCtx.beginPath();
+            const rad = Math.min(4, h * 0.2);
+            lensCtx.roundRect(x - 2, y - 2, w + 4, h + 4, rad);
+            lensCtx.fill();
+
+            // Purple border
+            lensCtx.strokeStyle = "rgba(108,99,255,0.7)";
+            lensCtx.lineWidth = 1;
+            lensCtx.stroke();
+
+            // Translated text
+            const fontSize = Math.max(9, Math.min(h * 0.6, 22));
+            lensCtx.font = `600 ${fontSize}px 'Segoe UI',sans-serif`;
+            lensCtx.fillStyle = "#c4b5fd";
+            lensCtx.textBaseline = "top";
+            canvasWrapText(lensCtx, r.translation || "", x, y, w, h, fontSize);
+          });
+        }
+      };
+      img.src = lensImageSrc;
+    }
+
     cameraInput.addEventListener("change", async e => {
       const file = e.target.files[0]; if (!file) return;
       cameraInput.value = "";
+
+      // Open lens modal immediately, draw image while API loads
+      lensModal.classList.add("show");
+      lensShowingOriginal = false;
+      lensRegions = [];
+      lensExtractedText = "";
+      document.getElementById("lensToggleBtn").textContent = "👁 Original";
+      document.getElementById("lensToggleBtn").classList.remove("active");
+      document.getElementById("lensRegionsCount").textContent = "";
+      lensSpinner.style.display = "block";
+      lensSetStatus("Analysing image…");
+
       const reader = new FileReader();
       reader.onload = async ev => {
-        const dataUrl = ev.target.result;
-        const base64 = dataUrl.split(",")[1];
+        lensImageSrc = ev.target.result;
+        const base64    = lensImageSrc.split(",")[1];
         const mediaType = file.type || "image/jpeg";
-        setStatus("translating");
-        setOutput("", false, true);
+
+        // Draw original image immediately
+        drawLens(true);
+
         try {
-          const res = await fetch("/api/vision", {
-            method: "POST", headers: {"Content-Type":"application/json"},
-            body: JSON.stringify({ imageBase64: base64, mediaType })
-          });
-          const json = await res.json();
-          if (json.error) { setOutput("⚠ "+json.error, false, false); setStatus("error"); return; }
-          inputText.value = json.extractedText;
-          updateCharCount();
-          triggerTranslation();
-        } catch { setOutput("⚠ Network error. Please try again.", false, false); setStatus("error"); }
+          // Run both calls in parallel: region detection + plain text extraction
+          const [regRes, txtRes] = await Promise.all([
+            fetch("/api/ocr-regions", { method:"POST", headers:{"Content-Type":"application/json"},
+              body: JSON.stringify({ imageBase64: base64, mediaType, tgtLang: langs[tgtLang].label }) }),
+            fetch("/api/vision",      { method:"POST", headers:{"Content-Type":"application/json"},
+              body: JSON.stringify({ imageBase64: base64, mediaType }) })
+          ]);
+
+          const regJson = await regRes.json();
+          const txtJson = await txtRes.json();
+
+          lensRegions = regJson.regions || [];
+          lensExtractedText = txtJson.extractedText || "";
+
+          lensSpinner.style.display = "none";
+
+          if (!lensRegions.length) {
+            lensSetStatus("No text found in image");
+            document.getElementById("lensRegionsCount").textContent = "";
+          } else {
+            lensSetStatus("Translation overlay ready");
+            document.getElementById("lensRegionsCount").textContent =
+              `${lensRegions.length} text region${lensRegions.length !== 1 ? "s" : ""} translated`;
+            lensShowingOriginal = false;
+            drawLens(false);
+          }
+        } catch (err) {
+          lensSpinner.style.display = "none";
+          lensSetStatus("⚠ Error: " + (err.message || "failed"));
+        }
       };
       reader.readAsDataURL(file);
     });
