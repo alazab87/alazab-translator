@@ -156,6 +156,43 @@
     .fav-remove { background: none; border: none; color: var(--text-muted); font-size: 0.85rem; cursor: pointer; padding: 0.1rem 0.25rem; border-radius: 0.3rem; flex-shrink: 0; transition: color 0.15s; line-height: 1; margin-top: 0.1rem; }
     .fav-remove:hover { color: var(--danger); }
 
+    /* ── Context field ── */
+    .context-bar { display: flex; flex-direction: column; gap: 0.4rem; }
+    .context-toggle { display: flex; align-items: center; justify-content: center; gap: 0.35rem; background: none; border: none; color: var(--text-muted); font-size: 0.75rem; cursor: pointer; font-family: inherit; padding: 0.1rem 0.5rem; border-radius: 0.4rem; transition: color 0.15s; }
+    .context-toggle:hover { color: var(--accent2); }
+    .context-toggle.active { color: var(--accent2); }
+    .context-input-wrap { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: 0.75rem; padding: 0.4rem 0.9rem; transition: border-color 0.2s; }
+    .context-input-wrap:focus-within { border-color: var(--accent); }
+    .context-input-wrap.show { display: block; }
+    .context-input { background: none; border: none; width: 100%; color: var(--text); font-size: 0.82rem; outline: none; font-family: inherit; padding: 0.15rem 0; }
+    .context-input::placeholder { color: var(--text-muted); }
+
+    /* ── Stats ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 0.5rem; padding: 0.75rem; }
+    @media(min-width:500px){ .stats-grid { grid-template-columns: repeat(4,1fr); } }
+    .stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 0.75rem; padding: 0.65rem 0.8rem; text-align: center; }
+    .stat-value { font-size: 1.4rem; font-weight: 700; color: var(--accent2); line-height: 1.1; }
+    .stat-label { font-size: 0.68rem; color: var(--text-muted); margin-top: 0.2rem; text-transform: uppercase; letter-spacing: 0.4px; }
+    .stats-pairs { padding: 0 0.75rem 0.75rem; }
+    .stats-pairs-title { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.4px; margin-bottom: 0.4rem; }
+    .pair-bar-wrap { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 0.3rem; }
+    .pair-bar-label { font-size: 0.78rem; color: var(--text); min-width: 140px; }
+    .pair-bar-track { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .pair-bar-fill { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); border-radius: 3px; transition: width 0.4s ease; }
+    .pair-bar-count { font-size: 0.7rem; color: var(--text-muted); min-width: 24px; text-align: right; }
+
+    /* ── Keyboard shortcuts modal ── */
+    .kbd-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 800; align-items: center; justify-content: center; }
+    .kbd-overlay.show { display: flex; }
+    .kbd-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; padding: 1.2rem 1.4rem; max-width: 360px; width: 90%; box-shadow: 0 16px 48px rgba(0,0,0,0.5); }
+    .kbd-modal h3 { font-size: 0.9rem; color: var(--accent2); margin-bottom: 0.9rem; display: flex; align-items: center; justify-content: space-between; }
+    .kbd-close { background: none; border: none; color: var(--text-muted); font-size: 1.1rem; cursor: pointer; }
+    .kbd-row { display: flex; align-items: center; justify-content: space-between; padding: 0.35rem 0; border-bottom: 1px solid var(--border); font-size: 0.82rem; }
+    .kbd-row:last-child { border-bottom: none; }
+    .kbd-desc { color: var(--text-muted); }
+    .kbd-keys { display: flex; gap: 0.25rem; }
+    kbd { background: var(--surface2); border: 1px solid var(--border); border-radius: 0.3rem; padding: 0.1rem 0.45rem; font-size: 0.72rem; color: var(--text); font-family: inherit; }
+
     /* ── Live Conversation ── */
     .conv-toggle-bar { display: flex; justify-content: center; }
     .conv-toggle-btn { display: flex; align-items: center; gap: 0.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 2rem; padding: 0.42rem 1.3rem; font-size: 0.82rem; color: var(--text-muted); cursor: pointer; font-family: inherit; font-weight: 500; transition: all 0.2s; }
@@ -272,6 +309,15 @@
       </div>
     </div>
 
+    <!-- Context field -->
+    <div class="context-bar">
+      <button class="context-toggle" id="contextToggle">⚙ Add context hint <span id="contextChevron">▾</span></button>
+      <div class="context-input-wrap" id="contextWrap">
+        <input class="context-input" id="contextInput" maxlength="120"
+               placeholder="e.g. legal document, medical text, casual conversation, product description…" />
+      </div>
+    </div>
+
     <!-- Translation panels -->
     <div class="panels">
       <!-- Input -->
@@ -368,7 +414,10 @@
     <div class="collapsible-section" id="historySection" style="display:none">
       <div class="section-header">
         <span>🕐 Recent Translations</span>
-        <button class="section-clear-btn" id="historyClearBtn">Clear</button>
+        <div style="display:flex;gap:0.4rem">
+          <button class="section-clear-btn" id="historyExportBtn">⬇ Export</button>
+          <button class="section-clear-btn" id="historyClearBtn">Clear</button>
+        </div>
       </div>
       <div class="section-list" id="historyList"></div>
     </div>
@@ -383,8 +432,34 @@
     </div>
   </main>
 
+  <!-- Stats section -->
+  <div class="collapsible-section" id="statsSection" style="display:none;margin:0 0 0.5rem">
+    <div class="section-header">
+      <span>📊 Your Stats</span>
+      <button class="section-clear-btn" id="statsClearBtn">Reset</button>
+    </div>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="stats-pairs" id="statsPairs"></div>
+  </div>
+
+  <!-- Keyboard shortcuts modal -->
+  <div class="kbd-overlay" id="kbdOverlay">
+    <div class="kbd-modal">
+      <h3>⌨ Keyboard Shortcuts <button class="kbd-close" id="kbdClose">✕</button></h3>
+      <div class="kbd-row"><span class="kbd-desc">Translate now</span><span class="kbd-keys"><kbd>Ctrl</kbd><kbd>Enter</kbd></span></div>
+      <div class="kbd-row"><span class="kbd-desc">Copy translation</span><span class="kbd-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>C</kbd></span></div>
+      <div class="kbd-row"><span class="kbd-desc">Speak translation</span><span class="kbd-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>S</kbd></span></div>
+      <div class="kbd-row"><span class="kbd-desc">Toggle microphone</span><span class="kbd-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>M</kbd></span></div>
+      <div class="kbd-row"><span class="kbd-desc">Swap languages</span><span class="kbd-keys"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>X</kbd></span></div>
+      <div class="kbd-row"><span class="kbd-desc">Clear input</span><span class="kbd-keys"><kbd>Escape</kbd></span></div>
+      <div class="kbd-row"><span class="kbd-desc">Show this help</span><span class="kbd-keys"><kbd>?</kbd></span></div>
+    </div>
+  </div>
+
   <footer>
-    Powered by <strong>Claude AI</strong> · Alazab Translator © 2025
+    Powered by <strong>Claude AI</strong> · Alazab Translator © 2025 ·
+    <button onclick="document.getElementById('kbdOverlay').classList.add('show')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.72rem;font-family:inherit;padding:0">⌨ Shortcuts</button> ·
+    <button onclick="document.getElementById('statsSection').style.display=document.getElementById('statsSection').style.display==='none'?'block':'none';renderStats()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.72rem;font-family:inherit;padding:0">📊 Stats</button>
   </footer>
 
   <script>
@@ -394,12 +469,35 @@
       en:   { label:"English",     flag:"🇺🇸", speech:"en-US" },
       es:   { label:"Spanish",     flag:"🇪🇸", speech:"es-ES" },
       fr:   { label:"French",      flag:"🇫🇷", speech:"fr-FR" },
-      ar:   { label:"Arabic",      flag:"🇸🇦", speech:"ar-SA" },
+      ar:   { label:"Arabic",      flag:"🇸🇦", speech:"ar-SA",  rtl:true  },
       de:   { label:"German",      flag:"🇩🇪", speech:"de-DE" },
       it:   { label:"Italian",     flag:"🇮🇹", speech:"it-IT" },
       pt:   { label:"Portuguese",  flag:"🇧🇷", speech:"pt-BR" },
       zh:   { label:"Chinese",     flag:"🇨🇳", speech:"zh-CN" },
       ja:   { label:"Japanese",    flag:"🇯🇵", speech:"ja-JP" },
+      ko:   { label:"Korean",      flag:"🇰🇷", speech:"ko-KR" },
+      ru:   { label:"Russian",     flag:"🇷🇺", speech:"ru-RU" },
+      hi:   { label:"Hindi",       flag:"🇮🇳", speech:"hi-IN" },
+      tr:   { label:"Turkish",     flag:"🇹🇷", speech:"tr-TR" },
+      nl:   { label:"Dutch",       flag:"🇳🇱", speech:"nl-NL" },
+      pl:   { label:"Polish",      flag:"🇵🇱", speech:"pl-PL" },
+      sv:   { label:"Swedish",     flag:"🇸🇪", speech:"sv-SE" },
+      el:   { label:"Greek",       flag:"🇬🇷", speech:"el-GR" },
+      vi:   { label:"Vietnamese",  flag:"🇻🇳", speech:"vi-VN" },
+      th:   { label:"Thai",        flag:"🇹🇭", speech:"th-TH" },
+      id:   { label:"Indonesian",  flag:"🇮🇩", speech:"id-ID" },
+      ro:   { label:"Romanian",    flag:"🇷🇴", speech:"ro-RO" },
+      he:   { label:"Hebrew",      flag:"🇮🇱", speech:"he-IL",  rtl:true  },
+      uk:   { label:"Ukrainian",   flag:"🇺🇦", speech:"uk-UA" },
+      cs:   { label:"Czech",       flag:"🇨🇿", speech:"cs-CZ" },
+      fa:   { label:"Persian",     flag:"🇮🇷", speech:"fa-IR",  rtl:true  },
+      ms:   { label:"Malay",       flag:"🇲🇾", speech:"ms-MY" },
+      bn:   { label:"Bengali",     flag:"🇧🇩", speech:"bn-BD" },
+      sw:   { label:"Swahili",     flag:"🇰🇪", speech:"sw-KE" },
+      hu:   { label:"Hungarian",   flag:"🇭🇺", speech:"hu-HU" },
+      no:   { label:"Norwegian",   flag:"🇳🇴", speech:"nb-NO" },
+      da:   { label:"Danish",      flag:"🇩🇰", speech:"da-DK" },
+      fi:   { label:"Finnish",     flag:"🇫🇮", speech:"fi-FI" },
     };
 
     // ── Phrasebook data ──
@@ -487,8 +585,8 @@
       document.getElementById("inputLangLabel").textContent  = src.label;
       document.getElementById("outputLangLabel").textContent = tgt.label;
       inputText.placeholder = srcLang==="auto" ? "Type or paste anything — language auto-detected…" : `Type ${src.label} here…`;
-      inputText.dir  = srcLang==="ar" ? "rtl" : "ltr";
-      outputText.dir = tgtLang==="ar" ? "rtl" : "ltr";
+      inputText.dir  = langs[srcLang==="auto"?"en":srcLang]?.rtl ? "rtl" : "ltr";
+      outputText.dir = langs[tgtLang]?.rtl ? "rtl" : "ltr";
       renderDetectedBadge();
     }
 
@@ -511,7 +609,7 @@
       document.getElementById("altHint").style.opacity="0";
       dlBtn.style.display="none";
       outputText.innerHTML="";
-      outputText.dir = tgtLang==="ar"?"rtl":"ltr";
+      outputText.dir = langs[tgtLang]?.rtl?"rtl":"ltr";
       if (isPlaceholder||!text) { outputText.className="output-text placeholder"; outputText.textContent="Translation will appear here…"; return; }
       outputText.className="output-text";
       outputText.appendChild(document.createTextNode(text));
@@ -523,7 +621,7 @@
       currentTranslation = text;
       outputText.innerHTML="";
       outputText.className="output-text";
-      outputText.dir = tgtLang==="ar"?"rtl":"ltr";
+      outputText.dir = langs[tgtLang]?.rtl?"rtl":"ltr";
       text.split(/(\s+)/).forEach(part=>{
         if (!part) return;
         if (/^\s+$/.test(part)) { outputText.appendChild(document.createTextNode(part)); return; }
@@ -863,13 +961,15 @@
       if (abortController) abortController.abort(); abortController=new AbortController();
       closeAltPopup(); setStatus("translating"); setOutput("",false,true);
       try {
-        const res=await fetch("/api/translate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,srcLang:srcLang==="auto"?"Auto Detect":langs[srcLang].label,tgtLang:langs[tgtLang].label,formality}),signal:abortController.signal});
+        const res=await fetch("/api/translate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,srcLang:srcLang==="auto"?"Auto Detect":langs[srcLang].label,tgtLang:langs[tgtLang].label,formality,context:contextValue||undefined}),signal:abortController.signal});
         const json=await res.json().catch(()=>({}));
         if (!res.ok||json.error) { setOutput(`⚠ ${json.error||"HTTP "+res.status}`,false,false); setStatus("error"); return; }
         if (json.detectedLang) { detectedLang=json.detectedLang; renderDetectedBadge(); }
         finalizeOutput(json.translation,json.romanization||null);
         outCharCount.textContent=`${json.translation.length} chars`;
         setStatus("done"); addToHistory(text,json.translation);
+        const _sl = srcLang==="auto"?(Object.entries(langs).find(([k,v])=>v.label===detectedLang)?.[0]||"en"):srcLang;
+        trackStat(text, json.translation, _sl, tgtLang);
         // Word card: fire for single words / very short phrases
         if (isOneWord(text)) showWordCard(text); else hideWordCard();
       } catch(err) { if(err.name==="AbortError") return; setOutput("⚠ Network error. Please try again.",false,false); setStatus("error"); }
@@ -1217,6 +1317,103 @@
       document.getElementById("convMicSrc").classList.toggle("listening", convListeningWhich==="src");
       document.getElementById("convMicTgt").classList.toggle("listening", convListeningWhich==="tgt");
     }
+
+    // ── Context field ──
+    let contextValue = "";
+    const contextToggle = document.getElementById("contextToggle");
+    const contextWrap   = document.getElementById("contextWrap");
+    const contextInput  = document.getElementById("contextInput");
+    let contextOpen = false;
+    contextToggle.addEventListener("click", () => {
+      contextOpen = !contextOpen;
+      contextWrap.classList.toggle("show", contextOpen);
+      contextToggle.classList.toggle("active", contextOpen);
+      document.getElementById("contextChevron").textContent = contextOpen ? "▴" : "▾";
+      if (contextOpen) contextInput.focus();
+    });
+    contextInput.addEventListener("input", () => {
+      contextValue = contextInput.value;
+      if (inputText.value.trim()) { clearTimeout(debounceTimer); debounceTimer = setTimeout(triggerTranslation, 900); }
+    });
+
+    // ── Stats ──
+    function loadStats() {
+      const s = JSON.parse(localStorage.getItem("alazabStats") || "{}");
+      const today = new Date().toISOString().slice(0,10);
+      if (s.todayDate !== today) { s.today = 0; s.todayDate = today; }
+      return { total:0, words:0, pairs:{}, today:0, todayDate:today, ...s };
+    }
+    function saveStats(s) { localStorage.setItem("alazabStats", JSON.stringify(s)); }
+    function trackStat(srcText, tgtText, sl, tl) {
+      const s = loadStats();
+      s.total++;
+      s.today++;
+      s.words += srcText.trim().split(/\s+/).length;
+      const key = `${langs[sl]?.flag||""}${langs[sl]?.label||sl} → ${langs[tl]?.flag||""}${langs[tl]?.label||tl}`;
+      s.pairs[key] = (s.pairs[key] || 0) + 1;
+      saveStats(s);
+    }
+    function renderStats() {
+      const s = loadStats();
+      const topPairs = Object.entries(s.pairs).sort((a,b)=>b[1]-a[1]).slice(0,5);
+      const maxCount = topPairs[0]?.[1] || 1;
+      document.getElementById("statsGrid").innerHTML = `
+        <div class="stat-card"><div class="stat-value">${s.total}</div><div class="stat-label">Translations</div></div>
+        <div class="stat-card"><div class="stat-value">${s.words}</div><div class="stat-label">Words</div></div>
+        <div class="stat-card"><div class="stat-value">${s.today}</div><div class="stat-label">Today</div></div>
+        <div class="stat-card"><div class="stat-value">${topPairs.length}</div><div class="stat-label">Lang pairs</div></div>`;
+      document.getElementById("statsPairs").innerHTML = topPairs.length ? `
+        <div class="stats-pairs-title">Top language pairs</div>` +
+        topPairs.map(([k,v])=>`<div class="pair-bar-wrap">
+          <span class="pair-bar-label">${escHtml(k)}</span>
+          <div class="pair-bar-track"><div class="pair-bar-fill" style="width:${Math.round(v/maxCount*100)}%"></div></div>
+          <span class="pair-bar-count">${v}</span></div>`).join("") : "";
+    }
+    document.getElementById("statsClearBtn").addEventListener("click", () => {
+      localStorage.removeItem("alazabStats"); renderStats();
+    });
+
+    // ── Export history ──
+    document.getElementById("historyExportBtn").addEventListener("click", () => {
+      if (!translHistory.length) return;
+      const line = "─".repeat(44);
+      const txt = translHistory.map(h => {
+        const sl = langs[h.sl]?.label || h.sl, tl = langs[h.tl]?.label || h.tl;
+        return `${sl} → ${tl}\n${h.src}\n${h.tgt}`;
+      }).join(`\n${line}\n\n`);
+      const blob = new Blob([txt], {type:"text/plain;charset=utf-8"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `alazab-history-${new Date().toISOString().slice(0,10)}.txt`;
+      a.click(); URL.revokeObjectURL(a.href);
+    });
+
+    // ── Keyboard shortcuts ──
+    document.getElementById("kbdClose").addEventListener("click", () =>
+      document.getElementById("kbdOverlay").classList.remove("show"));
+    document.getElementById("kbdOverlay").addEventListener("click", e => {
+      if (e.target === e.currentTarget) e.currentTarget.classList.remove("show");
+    });
+    document.addEventListener("keydown", e => {
+      const mod = e.ctrlKey || e.metaKey;
+      // Don't fire when typing in inputs
+      const tag = document.activeElement?.tagName;
+      if (!mod && !e.shiftKey && e.key === "?" && tag !== "INPUT" && tag !== "TEXTAREA") {
+        document.getElementById("kbdOverlay").classList.add("show"); return;
+      }
+      if (e.key === "Escape") {
+        document.getElementById("kbdOverlay").classList.remove("show");
+        closeAltPopup();
+        if (document.activeElement !== inputText) { document.getElementById("clearBtn").click(); }
+        return;
+      }
+      if (!mod) return;
+      if (e.key === "Enter")                            { e.preventDefault(); triggerTranslation(); }
+      if (e.shiftKey && e.key === "C")                  { e.preventDefault(); document.getElementById("copyBtn").click(); }
+      if (e.shiftKey && e.key === "S")                  { e.preventDefault(); speakBtn.click(); }
+      if (e.shiftKey && (e.key === "M" || e.key === "m")) { e.preventDefault(); micBtn.click(); }
+      if (e.shiftKey && (e.key === "X" || e.key === "x")) { e.preventDefault(); document.getElementById("swapBtn").click(); }
+    });
 
     // ── Init ──
     buildDropdowns(); updateLangUI(); buildPhrasebook(); renderHistory(); renderFavorites(); updateConvMicLabels();
