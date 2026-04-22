@@ -350,7 +350,7 @@
           </div>
         </div>
         <input type="file" id="docInput" accept=".txt,.pdf,.docx" style="display:none">
-        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+        <input type="file" id="cameraInput" accept="image/*" style="display:none">
         <textarea id="inputText" placeholder="Type here…" spellcheck="true" autofocus></textarea>
         <div class="doc-banner" id="docBanner">
           <span id="docBannerName"></span>
@@ -1100,7 +1100,10 @@
     const cameraInput = document.getElementById("cameraInput");
     document.getElementById("cameraBtn").addEventListener("click", () => cameraInput.click());
 
-    let lensImageSrc = null, lensRegions = [], lensShowingOriginal = false, lensExtractedText = "";
+    let lensImg = null;           // cached HTMLImageElement
+    let lensRegions = [];
+    let lensShowingOriginal = false;
+    let lensExtractedText = "";
 
     const lensModal   = document.getElementById("lensModal");
     const lensCanvas  = document.getElementById("lensCanvas");
@@ -1109,14 +1112,99 @@
 
     function lensSetStatus(msg) { document.getElementById("lensStatus").textContent = msg; }
 
-    document.getElementById("lensCloseBtn").addEventListener("click", () => {
-      lensModal.classList.remove("show");
-    });
+    // Cross-browser rounded rectangle (avoids roundRect which is not universally supported)
+    function lensRoundRect(ctx, x, y, w, h, r) {
+      r = Math.max(0, Math.min(r, w / 2, h / 2));
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y,     x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h,     x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y,         x + r, y);
+      ctx.closePath();
+    }
+
+    // Wrap translated text inside a canvas region
+    function canvasWrapText(ctx, text, x, y, maxW, maxH, fontSize) {
+      const words = text.split(" ");
+      let line = "", lines = [];
+      for (const word of words) {
+        const test = line + word + " ";
+        if (ctx.measureText(test).width > maxW - 8 && line) { lines.push(line.trim()); line = word + " "; }
+        else line = test;
+      }
+      if (line.trim()) lines.push(line.trim());
+      if (!lines.length) return;
+
+      // Reduce font if too many lines to fit
+      let fs = fontSize;
+      while (lines.length * fs * 1.3 > maxH && fs > 8) fs -= 1;
+      ctx.font = `600 ${fs}px 'Segoe UI',system-ui,sans-serif`;
+
+      const lineH = fs * 1.3;
+      const totalH = lines.length * lineH;
+      const startY = y + (maxH - totalH) / 2 + fs * 0.85;
+      lines.forEach((l, i) => {
+        ctx.fillText(l, x + 5, startY + i * lineH, maxW - 10);
+      });
+    }
+
+    // Draw image + optional overlay onto canvas (uses cached lensImg)
+    function drawLens(showOriginal) {
+      if (!lensImg || !lensImg.complete || !lensImg.naturalWidth) return;
+      lensCanvas.width  = lensImg.naturalWidth;
+      lensCanvas.height = lensImg.naturalHeight;
+      lensCtx.drawImage(lensImg, 0, 0);
+
+      if (!showOriginal && lensRegions.length) {
+        lensRegions.forEach(r => {
+          // Clamp and validate coordinates
+          const px = r.x != null ? +r.x : 0;
+          const py = r.y != null ? +r.y : 0;
+          const pw = r.w != null ? +r.w : 10;
+          const ph = r.h != null ? +r.h : 5;
+          if (isNaN(px)||isNaN(py)||isNaN(pw)||isNaN(ph)) return;
+
+          const x = Math.max(0, px / 100 * lensCanvas.width);
+          const y = Math.max(0, py / 100 * lensCanvas.height);
+          const w = Math.min(lensCanvas.width  - x, pw / 100 * lensCanvas.width);
+          const h = Math.min(lensCanvas.height - y, ph / 100 * lensCanvas.height);
+          if (w < 5 || h < 5) return;
+
+          const pad = 3;
+          const rad = Math.min(6, w * 0.04, h * 0.3);
+
+          // Dark fill covering original text
+          lensCtx.fillStyle = "rgba(10,12,28,0.93)";
+          lensRoundRect(lensCtx, x - pad, y - pad, w + pad*2, h + pad*2, rad);
+          lensCtx.fill();
+
+          // Purple accent border
+          lensCtx.strokeStyle = "rgba(108,99,255,0.75)";
+          lensCtx.lineWidth = Math.max(1, lensCanvas.width * 0.001);
+          lensCtx.stroke();
+
+          // Translated text
+          const fontSize = Math.max(9, Math.min(h * 0.55, 24));
+          lensCtx.font = `600 ${fontSize}px 'Segoe UI',system-ui,sans-serif`;
+          lensCtx.fillStyle = "#c4b5fd";
+          lensCtx.textBaseline = "alphabetic";
+          canvasWrapText(lensCtx, r.translation || r.original || "", x, y, w, h, fontSize);
+        });
+      }
+    }
+
+    document.getElementById("lensCloseBtn").addEventListener("click", () => lensModal.classList.remove("show"));
 
     document.getElementById("lensToggleBtn").addEventListener("click", () => {
       lensShowingOriginal = !lensShowingOriginal;
-      document.getElementById("lensToggleBtn").textContent = lensShowingOriginal ? "👁 Translated" : "👁 Original";
-      document.getElementById("lensToggleBtn").classList.toggle("active", lensShowingOriginal);
+      const btn = document.getElementById("lensToggleBtn");
+      btn.textContent = lensShowingOriginal ? "👁 Translated" : "👁 Original";
+      btn.classList.toggle("active", lensShowingOriginal);
       drawLens(lensShowingOriginal);
     });
 
@@ -1128,121 +1216,63 @@
       triggerTranslation();
     });
 
-    // Wrap text to fit inside a box on the canvas
-    function canvasWrapText(ctx, text, x, y, maxW, maxH, fontSize) {
-      const words = text.split(" ");
-      const lineH = fontSize * 1.25;
-      let line = "", lines = [];
-      for (const w of words) {
-        const test = line + w + " ";
-        if (ctx.measureText(test).width > maxW - 6 && line) { lines.push(line.trim()); line = w + " "; }
-        else line = test;
-      }
-      lines.push(line.trim());
-      // Shrink font until lines fit vertically
-      if (lines.length * lineH > maxH && lines.length > 1) {
-        const shrunk = Math.max(8, Math.floor(maxH / lines.length / 1.25));
-        ctx.font = `600 ${shrunk}px 'Segoe UI',sans-serif`;
-      }
-      const actualLineH = fontSize * 1.25;
-      const startY = y + maxH / 2 - (lines.length * actualLineH) / 2 + actualLineH * 0.5;
-      lines.forEach((l, i) => ctx.fillText(l, x + 4, startY + i * actualLineH, maxW - 8));
-    }
-
-    function drawLens(showOriginal) {
-      const img = new Image();
-      img.onload = () => {
-        lensCanvas.width  = img.naturalWidth;
-        lensCanvas.height = img.naturalHeight;
-        lensCtx.drawImage(img, 0, 0);
-
-        if (!showOriginal) {
-          lensRegions.forEach(r => {
-            const x = r.x / 100 * lensCanvas.width;
-            const y = r.y / 100 * lensCanvas.height;
-            const w = r.w / 100 * lensCanvas.width;
-            const h = r.h / 100 * lensCanvas.height;
-            if (w < 2 || h < 2) return;
-
-            // Cover original text with a dark rounded box
-            lensCtx.fillStyle = "rgba(15,17,35,0.92)";
-            lensCtx.beginPath();
-            const rad = Math.min(4, h * 0.2);
-            lensCtx.roundRect(x - 2, y - 2, w + 4, h + 4, rad);
-            lensCtx.fill();
-
-            // Purple border
-            lensCtx.strokeStyle = "rgba(108,99,255,0.7)";
-            lensCtx.lineWidth = 1;
-            lensCtx.stroke();
-
-            // Translated text
-            const fontSize = Math.max(9, Math.min(h * 0.6, 22));
-            lensCtx.font = `600 ${fontSize}px 'Segoe UI',sans-serif`;
-            lensCtx.fillStyle = "#c4b5fd";
-            lensCtx.textBaseline = "top";
-            canvasWrapText(lensCtx, r.translation || "", x, y, w, h, fontSize);
-          });
-        }
-      };
-      img.src = lensImageSrc;
-    }
-
     cameraInput.addEventListener("change", async e => {
       const file = e.target.files[0]; if (!file) return;
       cameraInput.value = "";
 
-      // Open lens modal immediately, draw image while API loads
-      lensModal.classList.add("show");
-      lensShowingOriginal = false;
-      lensRegions = [];
-      lensExtractedText = "";
+      // Reset state and open modal immediately
+      lensImg = null; lensRegions = []; lensExtractedText = ""; lensShowingOriginal = false;
       document.getElementById("lensToggleBtn").textContent = "👁 Original";
       document.getElementById("lensToggleBtn").classList.remove("active");
       document.getElementById("lensRegionsCount").textContent = "";
       lensSpinner.style.display = "block";
-      lensSetStatus("Analysing image…");
+      lensSetStatus("Loading image…");
+      lensModal.classList.add("show");
 
       const reader = new FileReader();
+      reader.onerror = () => lensSetStatus("⚠ Could not read file");
       reader.onload = async ev => {
-        lensImageSrc = ev.target.result;
-        const base64    = lensImageSrc.split(",")[1];
+        const dataUrl   = ev.target.result;
+        const base64    = dataUrl.split(",")[1];
         const mediaType = file.type || "image/jpeg";
 
-        // Draw original image immediately
-        drawLens(true);
+        // Load and cache image, then draw original immediately
+        lensImg = new Image();
+        lensImg.onerror = () => lensSetStatus("⚠ Could not display image");
+        lensImg.onload = async () => {
+          drawLens(true);   // show original while API runs
+          lensSetStatus("Analysing image…");
 
-        try {
-          // Run both calls in parallel: region detection + plain text extraction
-          const [regRes, txtRes] = await Promise.all([
-            fetch("/api/ocr-regions", { method:"POST", headers:{"Content-Type":"application/json"},
-              body: JSON.stringify({ imageBase64: base64, mediaType, tgtLang: langs[tgtLang].label }) }),
-            fetch("/api/vision",      { method:"POST", headers:{"Content-Type":"application/json"},
-              body: JSON.stringify({ imageBase64: base64, mediaType }) })
-          ]);
+          try {
+            const [regRes, txtRes] = await Promise.all([
+              fetch("/api/ocr-regions", { method:"POST", headers:{"Content-Type":"application/json"},
+                body: JSON.stringify({ imageBase64: base64, mediaType, tgtLang: langs[tgtLang].label }) }),
+              fetch("/api/vision",      { method:"POST", headers:{"Content-Type":"application/json"},
+                body: JSON.stringify({ imageBase64: base64, mediaType }) })
+            ]);
 
-          const regJson = await regRes.json();
-          const txtJson = await txtRes.json();
+            const regJson = await regRes.json().catch(() => ({ regions: [] }));
+            const txtJson = await txtRes.json().catch(() => ({}));
 
-          lensRegions = regJson.regions || [];
-          lensExtractedText = txtJson.extractedText || "";
+            lensRegions       = Array.isArray(regJson.regions) ? regJson.regions : [];
+            lensExtractedText = txtJson.extractedText || "";
+            lensSpinner.style.display = "none";
 
-          lensSpinner.style.display = "none";
-
-          if (!lensRegions.length) {
-            lensSetStatus("No text found in image");
-            document.getElementById("lensRegionsCount").textContent = "";
-          } else {
-            lensSetStatus("Translation overlay ready");
-            document.getElementById("lensRegionsCount").textContent =
-              `${lensRegions.length} text region${lensRegions.length !== 1 ? "s" : ""} translated`;
-            lensShowingOriginal = false;
-            drawLens(false);
+            if (!lensRegions.length) {
+              lensSetStatus(lensExtractedText ? "No regions detected — use "Use text" below" : "No text found in image");
+            } else {
+              lensSetStatus("Translation overlay ready");
+              document.getElementById("lensRegionsCount").textContent =
+                `${lensRegions.length} region${lensRegions.length !== 1 ? "s" : ""} translated`;
+              lensShowingOriginal = false;
+              drawLens(false);
+            }
+          } catch (err) {
+            lensSpinner.style.display = "none";
+            lensSetStatus("⚠ " + (err.message || "Request failed"));
           }
-        } catch (err) {
-          lensSpinner.style.display = "none";
-          lensSetStatus("⚠ Error: " + (err.message || "failed"));
-        }
+        };
+        lensImg.src = dataUrl;
       };
       reader.readAsDataURL(file);
     });
