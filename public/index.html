@@ -306,6 +306,27 @@
     /* Silence countdown ring */
     .conv-silence-ring { display: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--accent); animation: spin 1s linear infinite; flex-shrink: 0; }
     .conv-silence-ring.active { display: block; }
+
+    /* ── Virtual Keyboard ── */
+    .vkb { background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; padding: 0.75rem; display: none; flex-direction: column; gap: 0.45rem; }
+    .vkb.open { display: flex; }
+    .vkb-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 0.3rem; }
+    .vkb-title { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    .vkb-close { background: none; border: 1px solid var(--border); border-radius: 0.4rem; color: var(--text-muted); cursor: pointer; font-size: 0.8rem; padding: 0.1rem 0.45rem; transition: all 0.15s; }
+    .vkb-close:hover { border-color: var(--danger); color: var(--danger); }
+    .vkb-row { display: flex; gap: 0.28rem; justify-content: center; flex-wrap: wrap; }
+    .vkb-key { background: var(--surface2); border: 1px solid var(--border); border-radius: 0.45rem; color: var(--text); font-size: 1.05rem; min-width: 2.35rem; height: 2.5rem; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.1s; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; padding: 0 0.35rem; border: none; }
+    .vkb-key:hover { background: rgba(108,99,255,0.22); color: var(--accent2); }
+    .vkb-key:active { transform: scale(0.9); background: rgba(108,99,255,0.35); }
+    .vkb-key.sm { font-size: 0.85rem; min-width: 2rem; height: 2.2rem; color: var(--text-muted); }
+    .vkb-key.wide { min-width: 4.2rem; font-size: 0.78rem; background: var(--surface); }
+    .vkb-key.wider { flex: 1; max-width: 10rem; font-size: 0.78rem; background: var(--surface); }
+    .vkb-key.action { background: rgba(108,99,255,0.15); color: var(--accent2); font-size: 0.78rem; }
+    .vkb-key.action:hover { background: rgba(108,99,255,0.35); }
+    .vkb-extras { display: flex; flex-wrap: wrap; gap: 0.28rem; }
+    .vkb-section-label { font-size: 0.63rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; padding: 0.1rem 0; }
+    .vkb-divider { height: 1px; background: var(--border); margin: 0.1rem 0; }
+    @media (max-width: 480px) { .vkb-key { min-width: 1.9rem; height: 2.2rem; font-size: 0.95rem; } }
   </style>
 </head>
 <body>
@@ -351,6 +372,7 @@
         <div class="panel-header">
           <span id="inputLangLabel">English</span>
           <div class="panel-actions">
+            <button class="icon-btn" id="vkbBtn" title="On-screen keyboard" style="display:none">⌨</button>
             <button class="icon-btn" id="cameraBtn" title="Translate text from a photo or image">📷</button>
             <button class="icon-btn" id="docBtn" title="Upload document (.txt .pdf .docx)">📎</button>
             <button class="icon-btn" id="micBtn" title="Speak to translate">🎤</button>
@@ -397,6 +419,9 @@
 
     <!-- Word Card (shown for single-word translations) -->
     <div class="wordcard" id="wordCard" style="display:none"></div>
+
+    <!-- Virtual Keyboard -->
+    <div class="vkb" id="vkbKeyboard"></div>
 
     <!-- ── Toolbar ── -->
     <nav class="toolbar" id="toolbar">
@@ -685,6 +710,7 @@
       inputText.dir  = langs[srcLang==="auto"?"en":srcLang]?.rtl ? "rtl" : "ltr";
       outputText.dir = langs[tgtLang]?.rtl ? "rtl" : "ltr";
       renderDetectedBadge();
+      if (window.updateVkbForLang) updateVkbForLang();
     }
 
     function renderDetectedBadge() {
@@ -1729,6 +1755,184 @@
       if (e.shiftKey && (e.key === "M" || e.key === "m")) { e.preventDefault(); micBtn.click(); }
       if (e.shiftKey && (e.key === "X" || e.key === "x")) { e.preventDefault(); document.getElementById("swapBtn").click(); }
     });
+
+    // ── Virtual Keyboard ──
+    (function() {
+      const VKB_LANGS = { ar: true, es: true, pt: true };
+
+      const layouts = {
+        ar: {
+          title: "🇸🇦 Arabic Keyboard",
+          rtl: true,
+          rows: [
+            ['ض','ص','ث','ق','ف','غ','ع','ه','خ','ح','ج','د'],
+            ['ش','س','ي','ب','ل','ا','ت','ن','م','ك','ط'],
+            ['ئ','ء','ؤ','ر','لا','ى','ة','و','ز','ظ','ذ'],
+          ],
+          punct: ['،','؟','!','؛',':','«','»','٠','١','٢','٣','٤','٥','٦','٧','٨','٩'],
+          diacritics: [
+            { label:'اَ', char:'\u064E', title:'Fatha (a)' },
+            { label:'اُ', char:'\u064F', title:'Damma (u)' },
+            { label:'اِ', char:'\u0650', title:'Kasra (i)' },
+            { label:'اّ', char:'\u0651', title:'Shadda' },
+            { label:'اْ', char:'\u0652', title:'Sukun' },
+            { label:'اً', char:'\u064B', title:'Tanwin fath' },
+            { label:'اٌ', char:'\u064C', title:'Tanwin damm' },
+            { label:'اٍ', char:'\u064D', title:'Tanwin kasr' },
+          ]
+        },
+        es: {
+          title: "🇪🇸 Spanish — Special Characters",
+          extras: [
+            { g: "Vowels", keys: ['á','é','í','ó','ú','Á','É','Í','Ó','Ú'] },
+            { g: "Other",  keys: ['ü','ñ','Ü','Ñ','¡','¿'] },
+          ]
+        },
+        pt: {
+          title: "🇧🇷 Portuguese — Special Characters",
+          extras: [
+            { g: "á â ã à", keys: ['á','â','ã','à','Á','Â','Ã','À'] },
+            { g: "é ê í",   keys: ['é','ê','í','É','Ê','Í'] },
+            { g: "ó ô õ ú", keys: ['ó','ô','õ','ú','Ó','Ô','Õ','Ú'] },
+            { g: "Other",   keys: ['ü','ç','Ü','Ç'] },
+          ]
+        }
+      };
+
+      const vkbEl  = document.getElementById("vkbKeyboard");
+      const vkbBtn = document.getElementById("vkbBtn");
+      let vkbOpen  = false;
+
+      function insert(char) {
+        const s = inputText.selectionStart, e = inputText.selectionEnd;
+        inputText.value = inputText.value.slice(0,s) + char + inputText.value.slice(e);
+        inputText.selectionStart = inputText.selectionEnd = s + char.length;
+        inputText.focus();
+        updateCharCount();
+        clearTimeout(debounceTimer); debounceTimer = setTimeout(triggerTranslation, 900);
+      }
+
+      function backspace() {
+        const s = inputText.selectionStart, e = inputText.selectionEnd;
+        if (s !== e) {
+          inputText.value = inputText.value.slice(0,s) + inputText.value.slice(e);
+          inputText.selectionStart = inputText.selectionEnd = s;
+        } else if (s > 0) {
+          inputText.value = inputText.value.slice(0,s-1) + inputText.value.slice(s);
+          inputText.selectionStart = inputText.selectionEnd = s-1;
+        }
+        inputText.focus();
+        updateCharCount();
+        clearTimeout(debounceTimer); debounceTimer = setTimeout(triggerTranslation, 1200);
+      }
+
+      function makeKey(text, cls, handler, title) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "vkb-key" + (cls ? " "+cls : "");
+        btn.textContent = text;
+        if (title) btn.title = title;
+        btn.addEventListener("mousedown", e => { e.preventDefault(); handler(); });
+        btn.addEventListener("touchstart", e => { e.preventDefault(); handler(); }, { passive: false });
+        return btn;
+      }
+
+      function buildKeyboard(langCode) {
+        const lay = layouts[langCode];
+        if (!lay) return;
+        vkbEl.innerHTML = "";
+
+        // Header
+        const hdr = document.createElement("div");
+        hdr.className = "vkb-header";
+        const title = document.createElement("span");
+        title.className = "vkb-title"; title.textContent = lay.title;
+        const closeBtn = document.createElement("button");
+        closeBtn.type = "button"; closeBtn.className = "vkb-close"; closeBtn.textContent = "✕ Close";
+        closeBtn.addEventListener("click", closeVkb);
+        hdr.append(title, closeBtn);
+        vkbEl.appendChild(hdr);
+
+        if (lay.rows) {
+          // ── Full keyboard (Arabic) ──
+          for (const row of lay.rows) {
+            const rowEl = document.createElement("div");
+            rowEl.className = "vkb-row";
+            if (lay.rtl) rowEl.dir = "rtl";
+            for (const k of row) rowEl.appendChild(makeKey(k, null, () => insert(k)));
+            vkbEl.appendChild(rowEl);
+          }
+
+          // Punctuation row
+          const div1 = document.createElement("div"); div1.className = "vkb-divider"; vkbEl.appendChild(div1);
+          const punctRow = document.createElement("div"); punctRow.className = "vkb-row";
+          for (const k of lay.punct) punctRow.appendChild(makeKey(k, "sm", () => insert(k)));
+          vkbEl.appendChild(punctRow);
+
+          // Diacritics
+          const div2 = document.createElement("div"); div2.className = "vkb-divider"; vkbEl.appendChild(div2);
+          const dLabel = document.createElement("div"); dLabel.className = "vkb-section-label"; dLabel.textContent = "Vowel marks (ḥarakāt)";
+          vkbEl.appendChild(dLabel);
+          const dRow = document.createElement("div"); dRow.className = "vkb-row";
+          for (const d of lay.diacritics) dRow.appendChild(makeKey(d.label, "sm", () => insert(d.char), d.title));
+          vkbEl.appendChild(dRow);
+
+          // Control row
+          const div3 = document.createElement("div"); div3.className = "vkb-divider"; vkbEl.appendChild(div3);
+          const ctrl = document.createElement("div"); ctrl.className = "vkb-row";
+          ctrl.appendChild(makeKey("Space", "wider action", () => insert(" ")));
+          ctrl.appendChild(makeKey("⌫ Delete", "wide action", backspace));
+          ctrl.appendChild(makeKey("↵ New line", "wide action", () => insert("\n")));
+          vkbEl.appendChild(ctrl);
+
+        } else if (lay.extras) {
+          // ── Compact extras (Spanish / Portuguese) ──
+          for (const group of lay.extras) {
+            const lbl = document.createElement("div"); lbl.className = "vkb-section-label"; lbl.textContent = group.g;
+            vkbEl.appendChild(lbl);
+            const row = document.createElement("div"); row.className = "vkb-row";
+            for (const k of group.keys) row.appendChild(makeKey(k, null, () => insert(k)));
+            vkbEl.appendChild(row);
+          }
+          const div = document.createElement("div"); div.className = "vkb-divider"; vkbEl.appendChild(div);
+          const ctrl = document.createElement("div"); ctrl.className = "vkb-row";
+          ctrl.appendChild(makeKey("⌫ Delete", "wide action", backspace));
+          vkbEl.appendChild(ctrl);
+        }
+      }
+
+      function openVkb() {
+        const lang = srcLang === "auto" ? "en" : srcLang;
+        if (!VKB_LANGS[lang]) { closeVkb(); return; }
+        buildKeyboard(lang);
+        vkbEl.classList.add("open");
+        vkbBtn.classList.add("active");
+        vkbOpen = true;
+        setTimeout(() => vkbEl.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
+      }
+
+      function closeVkb() {
+        vkbEl.classList.remove("open");
+        vkbBtn.classList.remove("active");
+        vkbOpen = false;
+      }
+
+      vkbBtn.addEventListener("click", () => { if (vkbOpen) closeVkb(); else openVkb(); });
+
+      // Show/hide the ⌨ button and auto-rebuild when language changes
+      window.updateVkbForLang = function() {
+        const lang = srcLang === "auto" ? "en" : srcLang;
+        const supported = VKB_LANGS[lang];
+        vkbBtn.style.display = supported ? "inline-flex" : "none";
+        if (vkbOpen) {
+          if (supported) buildKeyboard(lang);
+          else closeVkb();
+        }
+        // Auto-open for Arabic (most users have no Arabic keyboard)
+        if (lang === "ar" && !vkbOpen) { openVkb(); }
+        if (lang !== "ar" && vkbOpen && !VKB_LANGS[lang]) closeVkb();
+      };
+    })();
 
     // ── Toolbar ──
     (function() {
