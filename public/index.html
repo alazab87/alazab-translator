@@ -38,6 +38,22 @@
     .logo-icon { font-size: 2rem; -webkit-text-fill-color: initial; }
     .tagline { color: var(--text-muted); font-size: 0.82rem; margin-top: 0.3rem; letter-spacing: 0.5px; }
 
+    /* ── UI Language switcher ── */
+    .ui-lang-bar { display: flex; align-items: center; justify-content: center; gap: 0.35rem; padding-top: 0.65rem; flex-wrap: wrap; }
+    .ui-lang-lbl { font-size: 0.68rem; color: var(--text-muted); margin-inline-end: 0.15rem; }
+    .ui-lang-btn { background: none; border: 1px solid var(--border); border-radius: 0.55rem; padding: 0.22rem 0.65rem; cursor: pointer; font-size: 0.75rem; color: var(--text-muted); font-family: inherit; transition: all 0.15s; display: inline-flex; align-items: center; gap: 0.3rem; }
+    .ui-lang-btn:hover { border-color: var(--accent); color: var(--accent2); background: rgba(108,99,255,0.08); }
+    .ui-lang-btn.active { background: rgba(108,99,255,0.18); border-color: var(--accent); color: var(--accent2); font-weight: 700; }
+    /* RTL layout fixes */
+    body[dir="rtl"] .theme-btn { right: auto; left: 1rem; }
+    body[dir="rtl"] .lang-bar { direction: rtl; }
+    body[dir="rtl"] .panel-header { flex-direction: row-reverse; }
+    body[dir="rtl"] .status-bar { flex-direction: row-reverse; }
+    body[dir="rtl"] .section-header { flex-direction: row-reverse; }
+    body[dir="rtl"] .conv-top-bar { flex-direction: row-reverse; }
+    body[dir="rtl"] .wc-top { flex-direction: row-reverse; }
+    body[dir="rtl"] .wc-right { text-align: left; }
+
     /* ── Main ── */
     main { flex: 1; max-width: 1100px; width: 100%; margin: 0 auto; padding: 1.4rem 1rem 2rem; display: flex; flex-direction: column; gap: 1rem; }
 
@@ -344,7 +360,14 @@
   <header>
     <button class="theme-btn" id="themeBtn" title="Toggle light/dark mode">🌙</button>
     <div class="logo"><span class="logo-icon">🌐</span> Alazab Translator</div>
-    <p class="tagline">Smart · Direct · Accurate · Instant</p>
+    <p class="tagline" id="tagline">Smart · Direct · Accurate · Instant</p>
+    <div class="ui-lang-bar" id="uiLangBar">
+      <span class="ui-lang-lbl" id="uiLangLabel">App language:</span>
+      <button class="ui-lang-btn active" data-uilang="en">🇺🇸 English</button>
+      <button class="ui-lang-btn" data-uilang="ar">🇸🇦 العربية</button>
+      <button class="ui-lang-btn" data-uilang="es">🇪🇸 Español</button>
+      <button class="ui-lang-btn" data-uilang="pt">🇧🇷 Português</button>
+    </div>
   </header>
 
   <main>
@@ -640,6 +663,108 @@
     let translHistory = JSON.parse(localStorage.getItem("alazabHistory")    || "[]");
     let favorites     = JSON.parse(localStorage.getItem("alazabFavorites")  || "[]");
 
+    // ── UI Language strings ──
+    const uiStrings = {
+      en: {
+        tagline:"Smart · Direct · Accurate · Instant", uiLangLabel:"App language:",
+        tbTone:"Tone", tbPhrases:"Phrases", tbTalk:"Talk", tbSaved:"Saved", tbMore:"More",
+        toneLabel:"Tone:", toneCasual:"😊 Casual", toneNatural:"✦ Natural", toneFormal:"👔 Formal",
+        contextToggle:"⚙ Add context hint",
+        contextPlaceholder:"e.g. legal document, medical text, casual conversation…",
+        outputPlaceholder:"Translation will appear here…",
+        statusReady:"Ready", statusWaiting:"Waiting…", statusTranslating:"Translating…",
+        statusDone:"Done", statusError:"Error", statusListening:"Listening…",
+        convTitle:"💬 Live Conversation", convRepeat:"🔊 Repeat", convClear:"Clear",
+        convEmpty:"Tap a mic button below to start speaking",
+        convAutoBtn:"⇄ Auto", convAutoLabel:"switch",
+        favTitle:"⭐ Favorites", histTitle:"🕐 Recent",
+        histExport:"⬇ Export", histClear:"Clear", favClear:"Clear",
+        savedEmpty:"✨ Save a translation with ☆ to see it here",
+        statsTitle:"📊 Your Stats", statsReset:"Reset",
+        statTranslations:"Translations", statWords:"Words", statToday:"Today", statPairs:"Lang pairs",
+        statsTopPairs:"Top language pairs",
+        themeMoreBtn:"🌙 Toggle theme", shortcutsBtn:"⌨️ Shortcuts", installBtn:"📲 Install app",
+        wcDefinition:"Definition", wcExample:"Example", wcSynonyms:"Synonyms",
+        wcLoading:"Looking up", altLoading:"Finding alternatives…", altSwap:"Swap",
+        inputPlaceholderAuto:"Type or paste anything — language auto-detected…",
+        inputPlaceholderLang:"Type %lang% here…",
+      },
+      ar: {
+        tagline:"ذكي · مباشر · دقيق · فوري", uiLangLabel:"لغة التطبيق:",
+        tbTone:"النبرة", tbPhrases:"عبارات", tbTalk:"محادثة", tbSaved:"محفوظ", tbMore:"المزيد",
+        toneLabel:"النبرة:", toneCasual:"😊 عامية", toneNatural:"✦ طبيعي", toneFormal:"👔 رسمي",
+        contextToggle:"⚙ إضافة تلميح سياقي",
+        contextPlaceholder:"مثال: وثيقة قانونية، نص طبي، محادثة عادية…",
+        outputPlaceholder:"ستظهر الترجمة هنا…",
+        statusReady:"جاهز", statusWaiting:"انتظار…", statusTranslating:"جارٍ الترجمة…",
+        statusDone:"تم", statusError:"خطأ", statusListening:"أنا أستمع…",
+        convTitle:"💬 محادثة مباشرة", convRepeat:"🔊 إعادة", convClear:"مسح",
+        convEmpty:"اضغط على زر الميكروفون للبدء",
+        convAutoBtn:"⇄ تلقائي", convAutoLabel:"تبديل",
+        favTitle:"⭐ المفضلة", histTitle:"🕐 الأخيرة",
+        histExport:"⬇ تصدير", histClear:"مسح", favClear:"مسح",
+        savedEmpty:"✨ احفظ ترجمة بالضغط على ☆",
+        statsTitle:"📊 إحصائياتك", statsReset:"إعادة تعيين",
+        statTranslations:"الترجمات", statWords:"الكلمات", statToday:"اليوم", statPairs:"أزواج اللغات",
+        statsTopPairs:"أكثر أزواج اللغات استخداماً",
+        themeMoreBtn:"🌙 تبديل المظهر", shortcutsBtn:"⌨️ اختصارات", installBtn:"📲 تثبيت التطبيق",
+        wcDefinition:"التعريف", wcExample:"مثال", wcSynonyms:"مرادفات",
+        wcLoading:"البحث عن", altLoading:"جارٍ البحث عن بدائل…", altSwap:"استبدال",
+        inputPlaceholderAuto:"اكتب أو الصق النص — يتم اكتشاف اللغة تلقائياً…",
+        inputPlaceholderLang:"اكتب %lang% هنا…",
+      },
+      es: {
+        tagline:"Inteligente · Directo · Preciso · Instantáneo", uiLangLabel:"Idioma de la app:",
+        tbTone:"Tono", tbPhrases:"Frases", tbTalk:"Hablar", tbSaved:"Guardado", tbMore:"Más",
+        toneLabel:"Tono:", toneCasual:"😊 Casual", toneNatural:"✦ Natural", toneFormal:"👔 Formal",
+        contextToggle:"⚙ Agregar contexto",
+        contextPlaceholder:"ej. documento legal, texto médico, conversación casual…",
+        outputPlaceholder:"La traducción aparecerá aquí…",
+        statusReady:"Listo", statusWaiting:"Esperando…", statusTranslating:"Traduciendo…",
+        statusDone:"Listo", statusError:"Error", statusListening:"Escuchando…",
+        convTitle:"💬 Conversación en vivo", convRepeat:"🔊 Repetir", convClear:"Borrar",
+        convEmpty:"Toca un micrófono para empezar a hablar",
+        convAutoBtn:"⇄ Auto", convAutoLabel:"cambiar",
+        favTitle:"⭐ Favoritos", histTitle:"🕐 Recientes",
+        histExport:"⬇ Exportar", histClear:"Borrar", favClear:"Borrar",
+        savedEmpty:"✨ Guarda una traducción con ☆ para verla aquí",
+        statsTitle:"📊 Tus estadísticas", statsReset:"Resetear",
+        statTranslations:"Traducciones", statWords:"Palabras", statToday:"Hoy", statPairs:"Pares de idiomas",
+        statsTopPairs:"Pares de idiomas más usados",
+        themeMoreBtn:"🌙 Cambiar tema", shortcutsBtn:"⌨️ Atajos", installBtn:"📲 Instalar app",
+        wcDefinition:"Definición", wcExample:"Ejemplo", wcSynonyms:"Sinónimos",
+        wcLoading:"Buscando", altLoading:"Buscando alternativas…", altSwap:"Cambiar",
+        inputPlaceholderAuto:"Escribe o pega cualquier texto — idioma detectado automáticamente…",
+        inputPlaceholderLang:"Escribe en %lang% aquí…",
+      },
+      pt: {
+        tagline:"Inteligente · Direto · Preciso · Instantâneo", uiLangLabel:"Idioma do app:",
+        tbTone:"Tom", tbPhrases:"Frases", tbTalk:"Conversa", tbSaved:"Salvo", tbMore:"Mais",
+        toneLabel:"Tom:", toneCasual:"😊 Casual", toneNatural:"✦ Natural", toneFormal:"👔 Formal",
+        contextToggle:"⚙ Adicionar contexto",
+        contextPlaceholder:"ex. documento legal, texto médico, conversa casual…",
+        outputPlaceholder:"A tradução aparecerá aqui…",
+        statusReady:"Pronto", statusWaiting:"Aguardando…", statusTranslating:"Traduzindo…",
+        statusDone:"Concluído", statusError:"Erro", statusListening:"Ouvindo…",
+        convTitle:"💬 Conversa ao vivo", convRepeat:"🔊 Repetir", convClear:"Limpar",
+        convEmpty:"Toque em um microfone para começar",
+        convAutoBtn:"⇄ Auto", convAutoLabel:"alternar",
+        favTitle:"⭐ Favoritos", histTitle:"🕐 Recentes",
+        histExport:"⬇ Exportar", histClear:"Limpar", favClear:"Limpar",
+        savedEmpty:"✨ Salve uma tradução com ☆ para vê-la aqui",
+        statsTitle:"📊 Suas estatísticas", statsReset:"Resetar",
+        statTranslations:"Traduções", statWords:"Palavras", statToday:"Hoje", statPairs:"Pares de idiomas",
+        statsTopPairs:"Pares de idiomas mais usados",
+        themeMoreBtn:"🌙 Alternar tema", shortcutsBtn:"⌨️ Atalhos", installBtn:"📲 Instalar app",
+        wcDefinition:"Definição", wcExample:"Exemplo", wcSynonyms:"Sinônimos",
+        wcLoading:"Procurando", altLoading:"Buscando alternativas…", altSwap:"Trocar",
+        inputPlaceholderAuto:"Digite ou cole qualquer texto — idioma detectado automaticamente…",
+        inputPlaceholderLang:"Digite em %lang% aqui…",
+      }
+    };
+    let currentUiLang = localStorage.getItem("alazabUiLang") || "en";
+    let currentStatusState = "ready";
+
     // ── Elements ──
     const inputText    = document.getElementById("inputText");
     const outputText   = document.getElementById("outputText");
@@ -706,7 +831,8 @@
       document.getElementById("tgtLabel").textContent        = tgt.label;
       document.getElementById("inputLangLabel").textContent  = src.label;
       document.getElementById("outputLangLabel").textContent = tgt.label;
-      inputText.placeholder = srcLang==="auto" ? "Type or paste anything — language auto-detected…" : `Type ${src.label} here…`;
+      const _uiS = uiStrings[currentUiLang] || uiStrings.en;
+      inputText.placeholder = srcLang==="auto" ? _uiS.inputPlaceholderAuto : _uiS.inputPlaceholderLang.replace("%lang%", src.label);
       inputText.dir  = langs[srcLang==="auto"?"en":srcLang]?.rtl ? "rtl" : "ltr";
       outputText.dir = langs[tgtLang]?.rtl ? "rtl" : "ltr";
       renderDetectedBadge();
@@ -720,8 +846,10 @@
     }
 
     function setStatus(state) {
-      const msgs={ready:"Ready",waiting:"Waiting…",translating:"Translating…",done:"Done",error:"Error",listening:"Listening…"};
-      const cls ={translating:" translating",waiting:" translating",done:" done",error:" error",listening:" listening"};
+      currentStatusState = state;
+      const s = uiStrings[currentUiLang] || uiStrings.en;
+      const msgs = {ready:s.statusReady, waiting:s.statusWaiting, translating:s.statusTranslating, done:s.statusDone, error:s.statusError, listening:s.statusListening};
+      const cls  = {translating:" translating", waiting:" translating", done:" done", error:" error", listening:" listening"};
       dot.className = "dot"+(cls[state]||"");
       statusText.textContent = msgs[state]||state;
     }
@@ -733,7 +861,7 @@
       dlBtn.style.display="none";
       outputText.innerHTML="";
       outputText.dir = langs[tgtLang]?.rtl?"rtl":"ltr";
-      if (isPlaceholder||!text) { outputText.className="output-text placeholder"; outputText.textContent="Translation will appear here…"; return; }
+      if (isPlaceholder||!text) { outputText.className="output-text placeholder"; outputText.textContent=(uiStrings[currentUiLang]||uiStrings.en).outputPlaceholder; return; }
       outputText.className="output-text";
       outputText.appendChild(document.createTextNode(text));
       if (showCursor) { const c=document.createElement("span"); c.className="cursor"; outputText.appendChild(c); }
@@ -771,7 +899,7 @@
       wordEl.classList.add("selected");
       altPopup = document.createElement("div");
       altPopup.className="alt-popup";
-      altPopup.innerHTML=`<div class="alt-loading">Finding alternatives…</div>`;
+      altPopup.innerHTML=`<div class="alt-loading">${(uiStrings[currentUiLang]||uiStrings.en).altLoading}</div>`;
       const rect=wordEl.getBoundingClientRect();
       altPopup.style.top  = Math.min(rect.bottom+6, window.innerHeight-160)+"px";
       altPopup.style.left = Math.max(4, Math.min(rect.left, window.innerWidth-164))+"px";
@@ -780,7 +908,7 @@
         const res=await fetch("/api/alternatives",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({word:cleanWord,context:currentTranslation,tgtLang:langs[tgtLang].label})});
         const json=await res.json();
         if (!json.alternatives?.length) throw new Error();
-        altPopup.innerHTML=`<div class="alt-header">Swap "${cleanWord}"</div>`+json.alternatives.map((a,i)=>`<div class="alt-option" data-i="${i}">${escHtml(a)}</div>`).join("");
+        altPopup.innerHTML=`<div class="alt-header">${(uiStrings[currentUiLang]||uiStrings.en).altSwap} "${cleanWord}"</div>`+json.alternatives.map((a,i)=>`<div class="alt-option" data-i="${i}">${escHtml(a)}</div>`).join("");
         altPopup.querySelectorAll(".alt-option").forEach(opt=>opt.addEventListener("click",ev=>{
           ev.stopPropagation();
           wordEl.textContent=json.alternatives[+opt.dataset.i];
@@ -1397,7 +1525,7 @@
       if (wcAbort) wcAbort.abort();
       wcAbort = new AbortController();
       wordCard.style.display = "block";
-      wordCard.innerHTML = `<div class="wc-loading"><div class="wc-spinner"></div> Looking up <em>${escHtml(word)}</em>…</div>`;
+      wordCard.innerHTML = `<div class="wc-loading"><div class="wc-spinner"></div> ${(uiStrings[currentUiLang]||uiStrings.en).wcLoading} <em>${escHtml(word)}</em>…</div>`;
 
       try {
         const sl = srcLang === "auto" ? (detectedLang || "English") : langs[srcLang].label;
@@ -1426,9 +1554,9 @@
           </div>
           <div class="wc-divider"></div>
           <div class="wc-body">
-            ${d.definition ? `<div><div class="wc-section-label">Definition</div><div class="wc-definition">${escHtml(d.definition)}</div></div>` : ""}
-            ${d.example ? `<div><div class="wc-section-label">Example</div><div class="wc-example">${escHtml(d.example)}</div></div>` : ""}
-            ${d.synonyms?.length ? `<div><div class="wc-section-label">Synonyms</div><div class="wc-synonyms">${d.synonyms.map(s=>`<span class="wc-syn">${escHtml(s)}</span>`).join("")}</div></div>` : ""}
+            ${d.definition ? `<div><div class="wc-section-label">${(uiStrings[currentUiLang]||uiStrings.en).wcDefinition}</div><div class="wc-definition">${escHtml(d.definition)}</div></div>` : ""}
+            ${d.example ? `<div><div class="wc-section-label">${(uiStrings[currentUiLang]||uiStrings.en).wcExample}</div><div class="wc-example">${escHtml(d.example)}</div></div>` : ""}
+            ${d.synonyms?.length ? `<div><div class="wc-section-label">${(uiStrings[currentUiLang]||uiStrings.en).wcSynonyms}</div><div class="wc-synonyms">${d.synonyms.map(s=>`<span class="wc-syn">${escHtml(s)}</span>`).join("")}</div></div>` : ""}
           </div>`;
 
         // Clicking a synonym fills input + re-translates
@@ -1698,13 +1826,14 @@
       const s = loadStats();
       const topPairs = Object.entries(s.pairs).sort((a,b)=>b[1]-a[1]).slice(0,5);
       const maxCount = topPairs[0]?.[1] || 1;
+      const _str = uiStrings[currentUiLang] || uiStrings.en;
       document.getElementById("statsGrid").innerHTML = `
-        <div class="stat-card"><div class="stat-value">${s.total}</div><div class="stat-label">Translations</div></div>
-        <div class="stat-card"><div class="stat-value">${s.words}</div><div class="stat-label">Words</div></div>
-        <div class="stat-card"><div class="stat-value">${s.today}</div><div class="stat-label">Today</div></div>
-        <div class="stat-card"><div class="stat-value">${topPairs.length}</div><div class="stat-label">Lang pairs</div></div>`;
+        <div class="stat-card"><div class="stat-value">${s.total}</div><div class="stat-label">${_str.statTranslations}</div></div>
+        <div class="stat-card"><div class="stat-value">${s.words}</div><div class="stat-label">${_str.statWords}</div></div>
+        <div class="stat-card"><div class="stat-value">${s.today}</div><div class="stat-label">${_str.statToday}</div></div>
+        <div class="stat-card"><div class="stat-value">${topPairs.length}</div><div class="stat-label">${_str.statPairs}</div></div>`;
       document.getElementById("statsPairs").innerHTML = topPairs.length ? `
-        <div class="stats-pairs-title">Top language pairs</div>` +
+        <div class="stats-pairs-title">${_str.statsTopPairs}</div>` +
         topPairs.map(([k,v])=>`<div class="pair-bar-wrap">
           <span class="pair-bar-label">${escHtml(k)}</span>
           <div class="pair-bar-track"><div class="pair-bar-fill" style="width:${Math.round(v/maxCount*100)}%"></div></div>
@@ -1984,9 +2113,10 @@
       // Wire "More" panel quick-action buttons
       document.getElementById("themeMoreBtn").addEventListener("click", () => {
         document.getElementById("themeBtn").click();
-        // Update label
+        // Update label (keep translated text, just swap the emoji for light/dark)
+        const baseLabel = (uiStrings[currentUiLang] || uiStrings.en).themeMoreBtn.replace(/^[🌙☀️]+\s*/u, "");
         document.getElementById("themeMoreBtn").textContent =
-          document.body.classList.contains("light") ? "🌙 Toggle theme" : "☀️ Toggle theme";
+          (document.body.classList.contains("light") ? "🌙 " : "☀️ ") + baseLabel;
       });
 
       const installMoreBtn = document.getElementById("installMoreBtn");
@@ -2012,8 +2142,93 @@
       updateSavedBadge();
     })();
 
+    // ── UI Language: apply ──
+    function applyUiLang(code) {
+      const s = uiStrings[code] || uiStrings.en;
+      currentUiLang = code;
+      localStorage.setItem("alazabUiLang", code);
+
+      // Active button highlight
+      document.querySelectorAll(".ui-lang-btn").forEach(b => b.classList.toggle("active", b.dataset.uilang === code));
+
+      // RTL direction (Arabic)
+      document.body.setAttribute("dir", code === "ar" ? "rtl" : "ltr");
+      document.documentElement.lang = code;
+
+      // Header
+      document.getElementById("tagline").textContent    = s.tagline;
+      document.getElementById("uiLangLabel").textContent = s.uiLangLabel;
+
+      // Toolbar labels
+      document.querySelector('.tb-btn[data-panel="tone"] .tb-label').textContent    = s.tbTone;
+      document.querySelector('.tb-btn[data-panel="phrases"] .tb-label').textContent = s.tbPhrases;
+      document.querySelector('.tb-btn[data-panel="talk"] .tb-label').textContent    = s.tbTalk;
+      document.querySelector('.tb-btn[data-panel="saved"] .tb-label').textContent   = s.tbSaved;
+      document.querySelector('.tb-btn[data-panel="more"] .tb-label').textContent    = s.tbMore;
+
+      // Tone panel
+      document.querySelector(".formality-label").textContent                    = s.toneLabel;
+      document.querySelector('.formality-btn[data-val="casual"]').textContent   = s.toneCasual;
+      document.querySelector('.formality-btn[data-val="neutral"]').textContent  = s.toneNatural;
+      document.querySelector('.formality-btn[data-val="formal"]').textContent   = s.toneFormal;
+
+      // Context toggle — preserve chevron span
+      const chevronEl   = document.getElementById("contextChevron");
+      const chevronChar = chevronEl ? chevronEl.textContent : "▾";
+      document.getElementById("contextToggle").innerHTML =
+        `${s.contextToggle} <span id="contextChevron">${chevronChar}</span>`;
+      document.getElementById("contextInput").placeholder = s.contextPlaceholder;
+
+      // Output placeholder (only when currently showing the placeholder)
+      if (outputText.classList.contains("placeholder")) outputText.textContent = s.outputPlaceholder;
+
+      // Status — re-apply current state
+      setStatus(currentStatusState);
+
+      // Conversation panel
+      const convTitleEl = document.querySelector(".conv-top-bar span:first-child");
+      if (convTitleEl) convTitleEl.textContent = s.convTitle;
+      document.getElementById("convRepeatBtn").textContent = s.convRepeat;
+      document.getElementById("convClearBtn").textContent  = s.convClear;
+      const convEmptyEl = convMessagesEl.querySelector(".conv-empty");
+      if (convEmptyEl) convEmptyEl.textContent = s.convEmpty;
+      document.getElementById("convAutoBtn").textContent = s.convAutoBtn;
+      document.querySelector(".conv-auto-label").textContent = s.convAutoLabel;
+
+      // Saved panel section titles & buttons
+      const favHdr  = document.querySelector("#favSection .section-header span");
+      if (favHdr)  favHdr.textContent  = s.favTitle;
+      const histHdr = document.querySelector("#historySection .section-header span");
+      if (histHdr) histHdr.textContent = s.histTitle;
+      document.getElementById("favClearBtn").textContent       = s.favClear;
+      document.getElementById("historyClearBtn").textContent   = s.histClear;
+      document.getElementById("historyExportBtn").textContent  = s.histExport;
+      document.getElementById("savedEmptyState").textContent   = s.savedEmpty;
+
+      // More / Stats panel
+      const statsHdr = document.querySelector("#statsSection .section-header span");
+      if (statsHdr) statsHdr.textContent = s.statsTitle;
+      document.getElementById("statsClearBtn").textContent = s.statsReset;
+      document.getElementById("themeMoreBtn").textContent  = s.themeMoreBtn;
+      const shortcutsMoreBtn = document.querySelector('.more-btn[onclick*="kbdOverlay"]');
+      if (shortcutsMoreBtn) shortcutsMoreBtn.textContent = s.shortcutsBtn;
+      const installMoreBtn = document.getElementById("installMoreBtn");
+      if (installMoreBtn) installMoreBtn.textContent = s.installBtn;
+
+      // Re-render stats if the More panel is open
+      if (document.getElementById("panel-more").classList.contains("open")) renderStats();
+
+      // Refresh input placeholder
+      updateLangUI();
+    }
+
+    document.querySelectorAll(".ui-lang-btn").forEach(btn =>
+      btn.addEventListener("click", () => applyUiLang(btn.dataset.uilang))
+    );
+
     // ── Init ──
     buildDropdowns(); updateLangUI(); buildPhrasebook(); renderHistory(); renderFavorites(); updateConvMicLabels();
+    applyUiLang(currentUiLang);
   </script>
 </body>
 </html>
