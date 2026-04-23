@@ -4,6 +4,7 @@
   "description": "Alazab Translator - Smart English to Spanish Translation",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "@vercel/analytics": "^2.0.1",
     "express": "^4.18.2"
   }
 }
