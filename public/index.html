@@ -1278,7 +1278,11 @@
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          setOutput(`⚠ ${err.error || "HTTP " + res.status}`, false, false);
+          if (res.status === 429) {
+            setOutput(`⏱ ${err.error || "Too many requests — please wait a moment."}`, false, false);
+          } else {
+            setOutput(`⚠ ${err.error || "HTTP " + res.status}`, false, false);
+          }
           setStatus("error"); return;
         }
 

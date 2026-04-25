@@ -1,4 +1,5 @@
 const Anthropic = require("@anthropic-ai/sdk");
+const { checkLimit, visionLimiter } = require("./_ratelimit");
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -6,6 +7,9 @@ module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).end();
+
+  const limited = await checkLimit(visionLimiter, req);
+  if (limited) return res.status(429).json(limited);
 
   const { imageBase64, mediaType, tgtLang } = req.body;
   if (!imageBase64) return res.status(400).json({ error: "No image provided" });
