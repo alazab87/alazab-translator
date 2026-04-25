@@ -11,6 +11,8 @@
   <meta name="apple-mobile-web-app-title" content="Alazab" />
   <link rel="apple-touch-icon" href="/icon.svg" />
   <meta name="description" content="Smart real-time AI translation powered by Claude — 9 languages, voice, camera, and more." />
+  <!-- Vercel Web Analytics -->
+  <script defer src="/_vercel/insights/script.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -1121,7 +1123,7 @@
       recognition.onerror=e=>{ isListening=false; micBtn.classList.remove("listening"); if(e.error==="not-allowed"){setOutput("⚠ Microphone permission denied.",false,false);setStatus("error");} };
     } else micBtn.style.display="none";
 
-    micBtn.addEventListener("click",()=>{ if(!recognition) return; if(isListening) recognition.stop(); else { recognition.lang=langs[srcLang==="auto"?"en":srcLang]?.speech||"en-US"; recognition.start(); } });
+    micBtn.addEventListener("click",()=>{ if(!recognition) return; if(isListening) recognition.stop(); else { track("feature",{name:"voice_input"}); recognition.lang=langs[srcLang==="auto"?"en":srcLang]?.speech||"en-US"; recognition.start(); } });
 
     // ── Document upload ──
     const docInput=document.getElementById("docInput");
@@ -1327,6 +1329,7 @@
                 addToHistory(text, fullText);
                 const _sl = srcLang === "auto" ? (Object.entries(langs).find(([k,v]) => v.label === detectedLang)?.[0] || "en") : srcLang;
                 trackStat(text, fullText, _sl, tgtLang);
+                track("translation", { from: langs[_sl]?.label || _sl, to: langs[tgtLang]?.label || tgtLang });
                 if (isOneWord(text)) showWordCard(text); else hideWordCard();
                 // Store in cache
                 if (translCache.size >= CACHE_MAX) translCache.delete(translCache.keys().next().value);
@@ -1445,7 +1448,7 @@
 
     // ── Camera / Image Lens ──
     const cameraInput = document.getElementById("cameraInput");
-    document.getElementById("cameraBtn").addEventListener("click", () => cameraInput.click());
+    document.getElementById("cameraBtn").addEventListener("click", () => { track("feature", { name: "camera" }); cameraInput.click(); });
 
     let lensImg = null;           // cached HTMLImageElement
     let lensRegions = [];
@@ -1733,8 +1736,8 @@
       if (lastConvTranslation) speakText(lastConvTranslation.text, langs[lastConvTranslation.langCode].speech);
     });
 
-    document.getElementById("convMicSrc").addEventListener("click", () => toggleConvListen("src"));
-    document.getElementById("convMicTgt").addEventListener("click", () => toggleConvListen("tgt"));
+    document.getElementById("convMicSrc").addEventListener("click", () => { track("feature", { name: "conversation" }); toggleConvListen("src"); });
+    document.getElementById("convMicTgt").addEventListener("click", () => { track("feature", { name: "conversation" }); toggleConvListen("tgt"); });
 
     function stopConvListen() {
       if (convRec) { try { convRec.stop(); } catch(e){} convRec = null; }
@@ -2370,6 +2373,11 @@
       const endpoints = ["/api/translate", "/api/wordcard", "/api/alternatives"];
       endpoints.forEach(ep => fetch(ep, { method: "OPTIONS" }).catch(() => {}));
     })();
+
+    // ── Analytics helper ──
+    function track(name, props) {
+      try { window.va?.("event", { name, ...props }); } catch(e) {}
+    }
   </script>
 </body>
 </html>
