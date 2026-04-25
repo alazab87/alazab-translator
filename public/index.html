@@ -663,11 +663,19 @@
     let translHistory = JSON.parse(localStorage.getItem("alazabHistory")    || "[]");
     let favorites     = JSON.parse(localStorage.getItem("alazabFavorites")  || "[]");
 
-    // ── Translation cache (in-memory, max 150 entries) ──
-    const translCache = new Map();
-    const CACHE_MAX   = 150;
-    function cacheKey(text, sl, tl, fm, ctx) {
-      return `${sl}|${tl}|${fm}|${ctx||""}|${text}`;
+    // ── Translation cache (sessionStorage-backed, max 150 entries) ──
+    const CACHE_MAX = 150;
+    function cacheKey(text, sl, tl, fm, ctx) { return `${sl}|${tl}|${fm}|${ctx||""}|${text}`; }
+    const translCache = (function() {
+      const map = new Map();
+      try {
+        const saved = sessionStorage.getItem("amaTranslCache");
+        if (saved) { const arr = JSON.parse(saved); arr.forEach(([k,v]) => map.set(k,v)); }
+      } catch(e) {}
+      return map;
+    })();
+    function persistCache() {
+      try { sessionStorage.setItem("amaTranslCache", JSON.stringify([...translCache])); } catch(e) {}
     }
 
     // ── UI Language strings ──
@@ -1319,6 +1327,7 @@
                 // Store in cache
                 if (translCache.size >= CACHE_MAX) translCache.delete(translCache.keys().next().value);
                 translCache.set(ck, { translation: fullText, romanization: romanResult, detectedLang: detectedResult });
+                persistCache();
                 break outer;
               }
             }
@@ -1338,6 +1347,7 @@
           if (isOneWord(text)) showWordCard(text); else hideWordCard();
           if (translCache.size >= CACHE_MAX) translCache.delete(translCache.keys().next().value);
           translCache.set(ck, { translation: json.translation, romanization: json.romanization || null, detectedLang: json.detectedLang || null });
+          persistCache();
         }
 
       } catch(err) {
@@ -2350,6 +2360,12 @@
     // ── Init ──
     buildDropdowns(); updateLangUI(); buildPhrasebook(); renderHistory(); renderFavorites(); updateConvMicLabels();
     applyUiLang(currentUiLang);
+
+    // ── Warmup: wake all serverless functions while user reads the page ──
+    (function warmupFunctions() {
+      const endpoints = ["/api/translate", "/api/wordcard", "/api/alternatives"];
+      endpoints.forEach(ep => fetch(ep, { method: "OPTIONS" }).catch(() => {}));
+    })();
   </script>
 </body>
 </html>
