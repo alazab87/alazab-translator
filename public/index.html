@@ -663,6 +663,13 @@
     let translHistory = JSON.parse(localStorage.getItem("alazabHistory")    || "[]");
     let favorites     = JSON.parse(localStorage.getItem("alazabFavorites")  || "[]");
 
+    // ── Translation cache (in-memory, max 150 entries) ──
+    const translCache = new Map();
+    const CACHE_MAX   = 150;
+    function cacheKey(text, sl, tl, fm, ctx) {
+      return `${sl}|${tl}|${fm}|${ctx||""}|${text}`;
+    }
+
     // ── UI Language strings ──
     const uiStrings = {
       en: {
@@ -1202,28 +1209,142 @@
     function updateCharCount() { charCount.textContent=`${inputText.value.length} chars`; }
     inputText.addEventListener("input",()=>{
       updateCharCount();
-      if (!inputText.value.trim()) { setOutput("",true); setStatus("ready"); detectedLang=null; renderDetectedBadge(); hideWordCard(); if(abortController) abortController.abort(); updateStarBtn(); return; }
-      setStatus("waiting"); clearTimeout(debounceTimer); debounceTimer=setTimeout(triggerTranslation,900);
+      if (!inputText.value.trim()) {
+        setOutput("",true); setStatus("ready"); detectedLang=null; renderDetectedBadge();
+        hideWordCard(); if(abortController) abortController.abort(); updateStarBtn(); return;
+      }
+      setStatus("waiting"); clearTimeout(debounceTimer);
+      // Instant trigger on sentence-end punctuation; 500 ms otherwise
+      const lastChar = inputText.value.trimEnd().slice(-1);
+      const delay = /[.!?。！？؟…]/.test(lastChar) ? 100 : 500;
+      debounceTimer = setTimeout(triggerTranslation, delay);
     });
 
     // ── Translation ──
     async function triggerTranslation() {
-      const text=inputText.value.trim(); if(!text) return;
-      if (abortController) abortController.abort(); abortController=new AbortController();
-      closeAltPopup(); setStatus("translating"); setOutput("",false,true);
-      try {
-        const res=await fetch("/api/translate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,srcLang:srcLang==="auto"?"Auto Detect":langs[srcLang].label,tgtLang:langs[tgtLang].label,formality,context:contextValue||undefined}),signal:abortController.signal});
-        const json=await res.json().catch(()=>({}));
-        if (!res.ok||json.error) { setOutput(`⚠ ${json.error||"HTTP "+res.status}`,false,false); setStatus("error"); return; }
-        if (json.detectedLang) { detectedLang=json.detectedLang; renderDetectedBadge(); }
-        finalizeOutput(json.translation,json.romanization||null);
-        outCharCount.textContent=`${json.translation.length} chars`;
-        setStatus("done"); addToHistory(text,json.translation);
-        const _sl = srcLang==="auto"?(Object.entries(langs).find(([k,v])=>v.label===detectedLang)?.[0]||"en"):srcLang;
-        trackStat(text, json.translation, _sl, tgtLang);
-        // Word card: fire for single words / very short phrases
+      const text = inputText.value.trim(); if (!text) return;
+
+      // ── Cache hit → instant result ──
+      const ck = cacheKey(text, srcLang, tgtLang, formality, contextValue);
+      if (translCache.has(ck)) {
+        const c = translCache.get(ck);
+        if (c.detectedLang) { detectedLang = c.detectedLang; renderDetectedBadge(); }
+        finalizeOutput(c.translation, c.romanization || null);
+        outCharCount.textContent = `${c.translation.length} chars`;
+        setStatus("done");
         if (isOneWord(text)) showWordCard(text); else hideWordCard();
-      } catch(err) { if(err.name==="AbortError") return; setOutput("⚠ Network error. Please try again.",false,false); setStatus("error"); }
+        updateStarBtn();
+        return;
+      }
+
+      if (abortController) abortController.abort();
+      abortController = new AbortController();
+      closeAltPopup(); setStatus("translating");
+
+      // Prepare output area for streaming
+      outputText.innerHTML = "";
+      outputText.className = "output-text";
+      outputText.dir = langs[tgtLang]?.rtl ? "rtl" : "ltr";
+      document.getElementById("romanizationText").style.display = "none";
+      document.getElementById("altHint").style.opacity = "0";
+      dlBtn.style.display = "none";
+      const streamTextNode = document.createTextNode("");
+      const cursorSpan     = document.createElement("span");
+      cursorSpan.className = "cursor";
+      outputText.appendChild(streamTextNode);
+      outputText.appendChild(cursorSpan);
+
+      try {
+        const res = await fetch("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
+          body: JSON.stringify({
+            text,
+            srcLang:   srcLang === "auto" ? "Auto Detect" : langs[srcLang].label,
+            tgtLang:   langs[tgtLang].label,
+            formality,
+            context:   contextValue || undefined
+          }),
+          signal: abortController.signal
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          setOutput(`⚠ ${err.error || "HTTP " + res.status}`, false, false);
+          setStatus("error"); return;
+        }
+
+        // ── Streaming path ──
+        if ((res.headers.get("content-type") || "").includes("text/event-stream")) {
+          const reader  = res.body.getReader();
+          const decoder = new TextDecoder();
+          let buf = "", fullText = "", romanResult = null, detectedResult = null;
+
+          outer: while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buf += decoder.decode(value, { stream: true });
+            const lines = buf.split("\n");
+            buf = lines.pop();                      // keep partial line
+
+            for (const line of lines) {
+              if (!line.startsWith("data: ")) continue;
+              let ev;
+              try { ev = JSON.parse(line.slice(6)); } catch { continue; }
+
+              if (ev.type === "detected") {
+                detectedResult = ev.lang;
+                detectedLang   = ev.lang;
+                renderDetectedBadge();
+              }
+              if (ev.type === "delta") {
+                fullText += ev.text;
+                streamTextNode.textContent = fullText;   // live update
+              }
+              if (ev.type === "romanization") {
+                romanResult = ev.text;
+              }
+              if (ev.type === "error") {
+                setOutput(`⚠ ${ev.message}`, false, false); setStatus("error"); break outer;
+              }
+              if (ev.type === "done") {
+                cursorSpan.remove();
+                finalizeOutput(fullText, romanResult);
+                outCharCount.textContent = `${fullText.length} chars`;
+                setStatus("done");
+                addToHistory(text, fullText);
+                const _sl = srcLang === "auto" ? (Object.entries(langs).find(([k,v]) => v.label === detectedLang)?.[0] || "en") : srcLang;
+                trackStat(text, fullText, _sl, tgtLang);
+                if (isOneWord(text)) showWordCard(text); else hideWordCard();
+                // Store in cache
+                if (translCache.size >= CACHE_MAX) translCache.delete(translCache.keys().next().value);
+                translCache.set(ck, { translation: fullText, romanization: romanResult, detectedLang: detectedResult });
+                break outer;
+              }
+            }
+          }
+
+        // ── Non-streaming fallback (local dev / serve.ps1) ──
+        } else {
+          const json = await res.json().catch(() => ({}));
+          if (json.error) { setOutput(`⚠ ${json.error}`, false, false); setStatus("error"); return; }
+          if (json.detectedLang) { detectedLang = json.detectedLang; renderDetectedBadge(); }
+          finalizeOutput(json.translation, json.romanization || null);
+          outCharCount.textContent = `${json.translation.length} chars`;
+          setStatus("done");
+          addToHistory(text, json.translation);
+          const _sl = srcLang === "auto" ? (Object.entries(langs).find(([k,v]) => v.label === detectedLang)?.[0] || "en") : srcLang;
+          trackStat(text, json.translation, _sl, tgtLang);
+          if (isOneWord(text)) showWordCard(text); else hideWordCard();
+          if (translCache.size >= CACHE_MAX) translCache.delete(translCache.keys().next().value);
+          translCache.set(ck, { translation: json.translation, romanization: json.romanization || null, detectedLang: json.detectedLang || null });
+        }
+
+      } catch(err) {
+        if (err.name === "AbortError") return;
+        setOutput("⚠ Network error. Please try again.", false, false);
+        setStatus("error");
+      }
     }
 
     // ── History ──
