@@ -345,6 +345,98 @@
     .vkb-section-label { font-size: 0.63rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; padding: 0.1rem 0; }
     .vkb-divider { height: 1px; background: var(--border); margin: 0.1rem 0; }
     @media (max-width: 480px) { .vkb-key { min-width: 1.9rem; height: 2.2rem; font-size: 0.95rem; } }
+
+    /* ── Learn panel ───────────────────────────────────────────────────── */
+    #panel-learn { padding: 0; }
+    .learn-setup-wrap { padding: 1.2rem 1.1rem 1.4rem; display: flex; flex-direction: column; gap: 0.9rem; max-width: 480px; margin: 0 auto; }
+    .learn-hero { font-size: 2.8rem; text-align: center; line-height: 1; }
+    .learn-title { font-size: 1.15rem; font-weight: 700; text-align: center; color: var(--accent2); margin: 0; }
+    .learn-sub { font-size: 0.8rem; color: var(--text-muted); text-align: center; margin: 0; }
+    .learn-row { display: flex; flex-direction: column; gap: 0.3rem; }
+    .learn-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    .learn-select { background: var(--surface2); border: 1px solid var(--border); border-radius: 0.6rem; color: var(--text); font-family: inherit; font-size: 0.88rem; padding: 0.5rem 0.8rem; outline: none; cursor: pointer; transition: border-color 0.2s; }
+    .learn-select:focus { border-color: var(--accent); }
+    .learn-diff-btns { display: flex; gap: 0.5rem; }
+    .learn-diff-btn { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 0.6rem; color: var(--text-muted); font-size: 0.78rem; font-family: inherit; padding: 0.45rem 0.3rem; cursor: pointer; transition: all 0.15s; }
+    .learn-diff-btn.active { background: rgba(108,99,255,0.15); border-color: var(--accent); color: var(--accent2); font-weight: 700; }
+    .learn-start-btn { background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 0.75rem; color: #fff; font-family: inherit; font-size: 0.95rem; font-weight: 700; padding: 0.75rem; cursor: pointer; transition: opacity 0.2s; margin-top: 0.2rem; }
+    .learn-start-btn:hover { opacity: 0.88; }
+    .learn-outline-btn { background: none; border: 1px solid var(--border); border-radius: 0.75rem; color: var(--text-muted); font-family: inherit; font-size: 0.88rem; padding: 0.6rem; cursor: pointer; transition: all 0.15s; }
+    .learn-outline-btn:hover { border-color: var(--accent); color: var(--accent2); }
+    .learn-progress-bar-wrap { display: flex; flex-direction: column; gap: 0.35rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 0.75rem; padding: 0.75rem 0.9rem; }
+    .learn-progress-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted); }
+    .learn-progress-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .learn-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width 0.4s ease; }
+
+    /* Session header */
+    .learn-session-header { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.75rem 1rem 0; }
+    .learn-session-top { display: flex; align-items: center; justify-content: space-between; }
+    .learn-back-btn { background: none; border: none; color: var(--text-muted); font-family: inherit; font-size: 0.82rem; cursor: pointer; padding: 0; }
+    .learn-back-btn:hover { color: var(--accent2); }
+    .learn-session-info { display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); }
+    .learn-session-score { font-weight: 700; color: var(--accent2); }
+    .learn-session-progress { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin: 0 0 0.5rem; }
+    .learn-session-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.4s ease; width: 0%; }
+
+    /* Loading */
+    .learn-loading { display: flex; align-items: center; justify-content: center; gap: 0.7rem; padding: 3rem 1rem; color: var(--text-muted); font-size: 0.88rem; }
+    .learn-spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+
+    /* Mode tabs */
+    .learn-mode-tabs { display: flex; gap: 0.35rem; padding: 0 1rem 0.6rem; }
+    .learn-mode-tab { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 0.55rem; color: var(--text-muted); font-family: inherit; font-size: 0.72rem; padding: 0.38rem 0.3rem; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+    .learn-mode-tab.active { background: rgba(108,99,255,0.15); border-color: var(--accent); color: var(--accent2); font-weight: 700; }
+    .learn-mode-pane { padding: 0 1rem 1rem; display: flex; flex-direction: column; gap: 0.85rem; }
+
+    /* Flashcard */
+    .learn-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 1rem; padding: 1.6rem 1.2rem; min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; text-align: center; gap: 0.6rem; }
+    .learn-card:hover { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+    .learn-card-pos { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); border-radius: 1rem; padding: 0.1rem 0.6rem; }
+    .learn-card-word { font-size: 1.9rem; font-weight: 700; color: var(--accent2); }
+    .learn-card-hint { font-size: 0.75rem; color: var(--text-muted); font-style: italic; }
+    .learn-card-translation { font-size: 1.5rem; font-weight: 700; color: var(--text); }
+    .learn-card-example { font-size: 0.82rem; color: var(--text-muted); font-style: italic; line-height: 1.45; }
+    .learn-card-tip { font-size: 0.78rem; color: var(--accent2); background: rgba(108,99,255,0.08); border-radius: 0.5rem; padding: 0.4rem 0.6rem; width: 100%; text-align: left; }
+    .learn-card-speak-btn { background: none; border: 1px solid var(--border); border-radius: 0.5rem; color: var(--text-muted); font-family: inherit; font-size: 0.78rem; padding: 0.3rem 0.7rem; cursor: pointer; transition: all 0.15s; }
+    .learn-card-speak-btn:hover { border-color: var(--accent); color: var(--accent2); }
+    .learn-fc-btns { display: flex; gap: 0.6rem; }
+    .learn-fc-btn { flex: 1; border: none; border-radius: 0.7rem; font-family: inherit; font-size: 0.85rem; font-weight: 700; padding: 0.65rem; cursor: pointer; transition: opacity 0.15s; }
+    .learn-fc-wrong { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .learn-fc-right { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .learn-fc-wrong:hover, .learn-fc-right:hover { opacity: 0.75; }
+
+    /* Multiple choice */
+    .learn-choice-question { background: var(--surface2); border: 1px solid var(--border); border-radius: 1rem; padding: 1.2rem; text-align: center; display: flex; flex-direction: column; gap: 0.5rem; }
+    .learn-choice-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    .learn-choice-word { font-size: 1.6rem; font-weight: 700; color: var(--accent2); }
+    .learn-choices { display: flex; flex-direction: column; gap: 0.45rem; }
+    .learn-choice-opt { background: var(--surface2); border: 1px solid var(--border); border-radius: 0.65rem; color: var(--text); font-family: inherit; font-size: 0.88rem; padding: 0.65rem 1rem; cursor: pointer; text-align: left; transition: all 0.15s; }
+    .learn-choice-opt:hover:not(:disabled) { border-color: var(--accent); background: rgba(108,99,255,0.08); }
+    .learn-choice-opt.correct { border-color: #22c55e; background: rgba(34,197,94,0.12); color: #22c55e; font-weight: 700; }
+    .learn-choice-opt.wrong { border-color: #ef4444; background: rgba(239,68,68,0.1); color: #ef4444; }
+    .learn-choice-opt:disabled { cursor: default; }
+
+    /* Type it */
+    .learn-type-question { background: var(--surface2); border: 1px solid var(--border); border-radius: 1rem; padding: 1.2rem; text-align: center; display: flex; flex-direction: column; gap: 0.4rem; }
+    .learn-type-example { font-size: 0.78rem; color: var(--text-muted); font-style: italic; }
+    .learn-type-wrap { display: flex; gap: 0.5rem; }
+    .learn-type-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 0.65rem; color: var(--text); font-family: inherit; font-size: 0.9rem; padding: 0.55rem 0.8rem; outline: none; transition: border-color 0.2s; }
+    .learn-type-input:focus { border-color: var(--accent); }
+    .learn-type-submit { background: var(--accent); border: none; border-radius: 0.65rem; color: #fff; font-family: inherit; font-size: 0.85rem; font-weight: 700; padding: 0.55rem 1rem; cursor: pointer; white-space: nowrap; transition: opacity 0.15s; }
+    .learn-type-submit:hover { opacity: 0.85; }
+    .learn-type-feedback { border-radius: 0.65rem; padding: 0.65rem 0.85rem; font-size: 0.82rem; line-height: 1.5; }
+    .learn-type-feedback.correct { background: rgba(34,197,94,0.12); border: 1px solid #22c55e; color: #22c55e; }
+    .learn-type-feedback.wrong { background: rgba(239,68,68,0.1); border: 1px solid #ef4444; color: var(--text); }
+    .learn-next-btn { background: var(--surface2); border: 1px solid var(--accent); border-radius: 0.65rem; color: var(--accent2); font-family: inherit; font-size: 0.88rem; font-weight: 700; padding: 0.6rem; cursor: pointer; transition: background 0.15s; }
+    .learn-next-btn:hover { background: rgba(108,99,255,0.12); }
+
+    /* Complete screen */
+    .learn-complete { display: flex; flex-direction: column; align-items: center; gap: 0.9rem; padding: 2rem 1.2rem 1.5rem; text-align: center; }
+    .learn-complete-emoji { font-size: 3rem; line-height: 1; }
+    .learn-complete-title { font-size: 1.2rem; font-weight: 700; color: var(--accent2); margin: 0; }
+    .learn-complete-stats { display: flex; gap: 1.2rem; justify-content: center; font-size: 0.88rem; color: var(--text-muted); }
+    .learn-complete-stat { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
+    .learn-complete-stat strong { font-size: 1.3rem; color: var(--text); }
   </style>
 </head>
 <body>
@@ -462,6 +554,9 @@
       <button class="tb-btn" data-panel="saved" title="Favorites &amp; history" id="tbSaved">
         <span class="tb-icon">⭐</span><span class="tb-label">Saved</span>
       </button>
+      <button class="tb-btn" data-panel="learn" title="Learn a language">
+        <span class="tb-icon">🎓</span><span class="tb-label">Learn</span>
+      </button>
       <button class="tb-btn" data-panel="more" title="Stats, theme &amp; more">
         <span class="tb-icon">⚙️</span><span class="tb-label">More</span>
       </button>
@@ -549,6 +644,146 @@
       </div>
     </div>
 
+    <!-- Learn panel -->
+    <div class="tb-panel" id="panel-learn">
+      <!-- Setup screen -->
+      <div id="learnSetup">
+        <div class="learn-setup-wrap">
+          <div class="learn-hero">🎓</div>
+          <h2 class="learn-title">Learn a Language</h2>
+          <p class="learn-sub">Practice vocabulary with AI-powered flashcards</p>
+
+          <div class="learn-row">
+            <label class="learn-label">I speak</label>
+            <select class="learn-select" id="learnNativeSel"></select>
+          </div>
+          <div class="learn-row">
+            <label class="learn-label">I want to learn</label>
+            <select class="learn-select" id="learnTargetSel"></select>
+          </div>
+          <div class="learn-row">
+            <label class="learn-label">Topic</label>
+            <select class="learn-select" id="learnTopicSel">
+              <option value="Greetings &amp; Introductions">👋 Greetings &amp; Introductions</option>
+              <option value="Numbers &amp; Time">🔢 Numbers &amp; Time</option>
+              <option value="Food &amp; Drinks">🍕 Food &amp; Drinks</option>
+              <option value="Travel &amp; Directions">✈️ Travel &amp; Directions</option>
+              <option value="Family &amp; People">👨‍👩‍👧 Family &amp; People</option>
+              <option value="Shopping &amp; Money">🛍️ Shopping &amp; Money</option>
+              <option value="Work &amp; Business">💼 Work &amp; Business</option>
+              <option value="Health &amp; Emergencies">🏥 Health &amp; Emergencies</option>
+              <option value="Nature &amp; Weather">🌤️ Nature &amp; Weather</option>
+              <option value="Common Phrases">💬 Common Phrases</option>
+            </select>
+          </div>
+          <div class="learn-row">
+            <label class="learn-label">Difficulty</label>
+            <div class="learn-diff-btns">
+              <button class="learn-diff-btn active" data-diff="Beginner">🌱 Beginner</button>
+              <button class="learn-diff-btn" data-diff="Intermediate">🔥 Intermediate</button>
+              <button class="learn-diff-btn" data-diff="Advanced">⚡ Advanced</button>
+            </div>
+          </div>
+
+          <button class="learn-start-btn" id="learnStartBtn">Start Practice →</button>
+
+          <!-- Progress summary (shown after first session) -->
+          <div class="learn-progress-bar-wrap" id="learnProgressWrap" style="display:none">
+            <div class="learn-progress-label">
+              <span id="learnProgressText">0 words mastered</span>
+              <span id="learnStreakText">🔥 0 day streak</span>
+            </div>
+            <div class="learn-progress-track"><div class="learn-progress-fill" id="learnProgressFill"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active session screen -->
+      <div id="learnSession" style="display:none">
+        <!-- Session header -->
+        <div class="learn-session-header">
+          <button class="learn-back-btn" id="learnBackBtn">← Back</button>
+          <div class="learn-session-info">
+            <span id="learnCardCounter">1 / 8</span>
+            <div class="learn-session-score" id="learnSessionScore">⭐ 0</div>
+          </div>
+          <div class="learn-session-progress">
+            <div class="learn-session-bar" id="learnSessionBar"></div>
+          </div>
+        </div>
+
+        <!-- Loading state -->
+        <div class="learn-loading" id="learnLoading">
+          <div class="learn-spinner"></div>
+          <span>Preparing your cards…</span>
+        </div>
+
+        <!-- Flashcard -->
+        <div class="learn-card-wrap" id="learnCardWrap" style="display:none">
+          <div class="learn-mode-tabs">
+            <button class="learn-mode-tab active" data-mode="flashcard">🃏 Flashcard</button>
+            <button class="learn-mode-tab" data-mode="choice">🔘 Multiple Choice</button>
+            <button class="learn-mode-tab" data-mode="type">✏️ Type It</button>
+          </div>
+
+          <!-- FLASHCARD mode -->
+          <div class="learn-mode-pane" id="modePaneFlashcard">
+            <div class="learn-card" id="learnCard">
+              <div class="learn-card-front" id="learnCardFront">
+                <div class="learn-card-pos" id="learnCardPos"></div>
+                <div class="learn-card-word" id="learnCardWord"></div>
+                <div class="learn-card-hint">Tap to reveal</div>
+              </div>
+              <div class="learn-card-back" id="learnCardBack" style="display:none">
+                <div class="learn-card-translation" id="learnCardTranslation"></div>
+                <div class="learn-card-example" id="learnCardExample"></div>
+                <div class="learn-card-tip" id="learnCardTip">💡 <span id="learnCardTipText"></span></div>
+                <button class="learn-card-speak-btn" id="learnCardSpeakBtn">🔊 Hear it</button>
+              </div>
+            </div>
+            <div class="learn-fc-btns" id="learnFcBtns" style="display:none">
+              <button class="learn-fc-btn learn-fc-wrong" id="learnFcWrong">✗ Still learning</button>
+              <button class="learn-fc-btn learn-fc-right" id="learnFcRight">✓ Got it!</button>
+            </div>
+          </div>
+
+          <!-- MULTIPLE CHOICE mode -->
+          <div class="learn-mode-pane" id="modePaneChoice" style="display:none">
+            <div class="learn-choice-question">
+              <div class="learn-choice-label">How do you say this in <span id="learnChoiceLangLabel"></span>?</div>
+              <div class="learn-choice-word" id="learnChoiceWord"></div>
+            </div>
+            <div class="learn-choices" id="learnChoices"></div>
+            <button class="learn-next-btn" id="learnChoiceNext" style="display:none">Next →</button>
+          </div>
+
+          <!-- TYPE IT mode -->
+          <div class="learn-mode-pane" id="modePaneType" style="display:none">
+            <div class="learn-type-question">
+              <div class="learn-choice-label">Translate to <span id="learnTypeLangLabel"></span>:</div>
+              <div class="learn-choice-word" id="learnTypeWord"></div>
+              <div class="learn-type-example" id="learnTypeExample"></div>
+            </div>
+            <div class="learn-type-wrap">
+              <input class="learn-type-input" id="learnTypeInput" placeholder="Type your answer…" autocomplete="off" autocorrect="off" spellcheck="false">
+              <button class="learn-type-submit" id="learnTypeSubmit">Check</button>
+            </div>
+            <div class="learn-type-feedback" id="learnTypeFeedback" style="display:none"></div>
+            <button class="learn-next-btn" id="learnTypeNext" style="display:none">Next →</button>
+          </div>
+        </div>
+
+        <!-- Session complete screen -->
+        <div class="learn-complete" id="learnComplete" style="display:none">
+          <div class="learn-complete-emoji" id="learnCompleteEmoji">🎉</div>
+          <h3 class="learn-complete-title">Session Complete!</h3>
+          <div class="learn-complete-stats" id="learnCompleteStats"></div>
+          <button class="learn-start-btn" id="learnAgainBtn">Practice Again</button>
+          <button class="learn-outline-btn" id="learnNewTopicBtn">Choose New Topic</button>
+        </div>
+      </div>
+    </div>
+
     <!-- More panel -->
     <div class="tb-panel" id="panel-more">
       <div id="statsSection">
@@ -613,12 +848,13 @@
     const langs = {
       auto: { label:"Auto Detect", flag:"🌐", speech:"en-US" },
       en:   { label:"English",     flag:"🇺🇸", speech:"en-US" },
-      es:   { label:"Spanish",     flag:"🇪🇸", speech:"es-ES" },
-      fr:   { label:"French",      flag:"🇫🇷", speech:"fr-FR" },
-      ar:   { label:"Arabic",      flag:"🇸🇦", speech:"ar-SA",  rtl:true  },
-      de:   { label:"German",      flag:"🇩🇪", speech:"de-DE" },
-      it:   { label:"Italian",     flag:"🇮🇹", speech:"it-IT" },
-      pt:   { label:"Portuguese",  flag:"🇧🇷", speech:"pt-BR" },
+      es:   { label:"Spanish",              flag:"🇪🇸", speech:"es-ES" },
+      esla: { label:"Latin American Spanish", flag:"🇲🇽", speech:"es-MX" },
+      fr:   { label:"French",               flag:"🇫🇷", speech:"fr-FR" },
+      ar:   { label:"Arabic",               flag:"🇸🇦", speech:"ar-SA",  rtl:true  },
+      de:   { label:"German",               flag:"🇩🇪", speech:"de-DE" },
+      it:   { label:"Italian",              flag:"🇮🇹", speech:"it-IT" },
+      pt:   { label:"Brazilian Portuguese", flag:"🇧🇷", speech:"pt-BR" },
       zh:   { label:"Chinese",     flag:"🇨🇳", speech:"zh-CN" },
       ja:   { label:"Japanese",    flag:"🇯🇵", speech:"ja-JP" },
       ko:   { label:"Korean",      flag:"🇰🇷", speech:"ko-KR" },
@@ -684,7 +920,7 @@
     const uiStrings = {
       en: {
         tagline:"Smart · Direct · Accurate · Instant", uiLangLabel:"App language:",
-        tbTone:"Tone", tbPhrases:"Phrases", tbTalk:"Talk", tbSaved:"Saved", tbMore:"More",
+        tbTone:"Tone", tbPhrases:"Phrases", tbTalk:"Talk", tbSaved:"Saved", tbLearn:"Learn", tbMore:"More",
         toneLabel:"Tone:", toneCasual:"😊 Casual", toneNatural:"✦ Natural", toneFormal:"👔 Formal",
         contextToggle:"⚙ Add context hint",
         contextPlaceholder:"e.g. legal document, medical text, casual conversation…",
@@ -708,7 +944,7 @@
       },
       ar: {
         tagline:"ذكي · مباشر · دقيق · فوري", uiLangLabel:"لغة التطبيق:",
-        tbTone:"النبرة", tbPhrases:"عبارات", tbTalk:"محادثة", tbSaved:"محفوظ", tbMore:"المزيد",
+        tbTone:"النبرة", tbPhrases:"عبارات", tbTalk:"محادثة", tbSaved:"محفوظ", tbLearn:"تعلّم", tbMore:"المزيد",
         toneLabel:"النبرة:", toneCasual:"😊 عامية", toneNatural:"✦ طبيعي", toneFormal:"👔 رسمي",
         contextToggle:"⚙ إضافة تلميح سياقي",
         contextPlaceholder:"مثال: وثيقة قانونية، نص طبي، محادثة عادية…",
@@ -732,7 +968,7 @@
       },
       es: {
         tagline:"Inteligente · Directo · Preciso · Instantáneo", uiLangLabel:"Idioma de la app:",
-        tbTone:"Tono", tbPhrases:"Frases", tbTalk:"Hablar", tbSaved:"Guardado", tbMore:"Más",
+        tbTone:"Tono", tbPhrases:"Frases", tbTalk:"Hablar", tbSaved:"Guardado", tbLearn:"Aprender", tbMore:"Más",
         toneLabel:"Tono:", toneCasual:"😊 Casual", toneNatural:"✦ Natural", toneFormal:"👔 Formal",
         contextToggle:"⚙ Agregar contexto",
         contextPlaceholder:"ej. documento legal, texto médico, conversación casual…",
@@ -756,7 +992,7 @@
       },
       pt: {
         tagline:"Inteligente · Direto · Preciso · Instantâneo", uiLangLabel:"Idioma do app:",
-        tbTone:"Tom", tbPhrases:"Frases", tbTalk:"Conversa", tbSaved:"Salvo", tbMore:"Mais",
+        tbTone:"Tom", tbPhrases:"Frases", tbTalk:"Conversa", tbSaved:"Salvo", tbLearn:"Aprender", tbMore:"Mais",
         toneLabel:"Tom:", toneCasual:"😊 Casual", toneNatural:"✦ Natural", toneFormal:"👔 Formal",
         contextToggle:"⚙ Adicionar contexto",
         contextPlaceholder:"ex. documento legal, texto médico, conversa casual…",
@@ -993,10 +1229,18 @@
     speakBtn.addEventListener("click",()=>{
       const t=getOutputText(); if (!t||!window.speechSynthesis) return;
       if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); speakBtn.classList.remove("speaking"); return; }
-      const u=new SpeechSynthesisUtterance(t);
-      u.lang=langs[tgtLang]?.speech||"en-US"; u.rate=0.95;
-      u.onend=u.onerror=()=>speakBtn.classList.remove("speaking");
-      speakBtn.classList.add("speaking"); window.speechSynthesis.speak(u);
+      speakBtn.classList.add("speaking");
+      const langCode = langs[tgtLang]?.speech || "en-US";
+      doSpeak(
+        t,
+        langCode,
+        () => speakBtn.classList.remove("speaking"),
+        () => {
+          speakBtn.classList.remove("speaking");
+          const langName = langs[tgtLang]?.label || tgtLang;
+          setStatus(`⚠ No ${langName} voice on this device. ${getDeviceHint()}`, "error");
+        }
+      );
     });
 
     // ── Star / Favorites ──
@@ -1748,13 +1992,89 @@
     const CONV_SILENCE_MS = 2500; // ms of silence before committing speech
     let lastConvTranslation = null; // { text, langCode } — for Repeat button
 
-    function speakText(text, langSpeech, onDone) {
+    // ── Smart voice picker ──────────────────────────────────────────────
+    // Each language gets a fallback chain so we always try the broadest
+    // possible match before giving up.
+    const VOICE_FALLBACKS = {
+      "ar-SA": ["ar-SA","ar-EG","ar-AE","ar-001","ar"],
+      "he-IL": ["he-IL","he"],
+      "hi-IN": ["hi-IN","hi"],
+      "th-TH": ["th-TH","th"],
+      "uk-UA": ["uk-UA","uk"],
+      "fa-IR": ["fa-IR","fa"],
+      "bn-BD": ["bn-BD","bn-IN","bn"],
+    };
+
+    // Score a voice — higher = better / more natural
+    function scoreVoice(v) {
+      const n = v.name.toLowerCase();
+      if (n.includes("google"))                    return 6;
+      if (n.includes("natural") || n.includes("neural")) return 5;
+      if (n.includes("enhanced") || n.includes("premium")) return 4;
+      if (n.includes("microsoft"))                 return 3;
+      if (v.localService)                          return 2;
+      return 1;
+    }
+
+    // Returns the best available voice for a BCP-47 code, or null if none found
+    function pickVoice(langCode) {
+      const voices = window.speechSynthesis.getVoices();
+      if (!voices.length) return null;
+
+      const chain = VOICE_FALLBACKS[langCode] || [langCode, langCode.split("-")[0]];
+      for (const code of chain) {
+        const prefix = code.split("-")[0].toLowerCase();
+        // Exact match first, then prefix match
+        let pool = voices.filter(v => v.lang.toLowerCase() === code.toLowerCase());
+        if (!pool.length) pool = voices.filter(v => v.lang.toLowerCase().startsWith(prefix));
+        if (pool.length) return pool.sort((a,b) => scoreVoice(b) - scoreVoice(a))[0];
+      }
+      return null; // no voice for this language on this device
+    }
+
+    // Human-readable install hint shown when no voice is found
+    const VOICE_INSTALL_HINT = {
+      android: "Go to Settings → General Management → Language → Text-to-speech → Google TTS → Install voice data.",
+      ios:     "Go to Settings → Accessibility → Spoken Content → Voices and download the language.",
+      windows: "Go to Settings → Time & Language → Language & Region and add the language pack.",
+      default: "Install a language pack for this language in your device settings.",
+    };
+    function getDeviceHint() {
+      const ua = navigator.userAgent.toLowerCase();
+      if (/android/.test(ua))          return VOICE_INSTALL_HINT.android;
+      if (/iphone|ipad/.test(ua))      return VOICE_INSTALL_HINT.ios;
+      if (/windows/.test(ua))          return VOICE_INSTALL_HINT.windows;
+      return VOICE_INSTALL_HINT.default;
+    }
+
+    function doSpeak(text, langCode, onDone, onNoVoice) {
       if (!window.speechSynthesis) { if (onDone) onDone(); return; }
       window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = langSpeech; u.rate = 0.95;
-      u.onend = u.onerror = onDone || null;
-      window.speechSynthesis.speak(u);
+
+      const go = () => {
+        const v = pickVoice(langCode);
+        if (!v) {
+          // No voice found — tell the user instead of silently doing nothing
+          if (onNoVoice) { onNoVoice(); }
+          else if (onDone) { onDone(); }
+          return;
+        }
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang  = v.lang;  // use the voice's own code (may differ slightly)
+        u.rate  = 0.78;    // relaxed pace — more natural
+        u.pitch = 1.05;    // slight warmth
+        u.voice = v;
+        u.onend = u.onerror = onDone || null;
+        window.speechSynthesis.speak(u);
+      };
+
+      // Voice list may not be ready on first call — wait if needed
+      if (window.speechSynthesis.getVoices().length) { go(); }
+      else { window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; go(); }; }
+    }
+
+    function speakText(text, langSpeech, onDone) {
+      doSpeak(text, langSpeech, onDone);
     }
 
     function toggleConvListen(which) {
@@ -2055,8 +2375,15 @@
             { g: "Other",  keys: ['ü','ñ','Ü','Ñ','¡','¿'] },
           ]
         },
+        esla: {
+          title: "🇲🇽 Latin American Spanish — Special Characters",
+          extras: [
+            { g: "Vowels", keys: ['á','é','í','ó','ú','Á','É','Í','Ó','Ú'] },
+            { g: "Other",  keys: ['ü','ñ','Ü','Ñ','¡','¿'] },
+          ]
+        },
         pt: {
-          title: "🇧🇷 Portuguese — Special Characters",
+          title: "🇧🇷 Brazilian Portuguese — Special Characters",
           extras: [
             { g: "á â ã à", keys: ['á','â','ã','à','Á','Â','Ã','À'] },
             { g: "é ê í",   keys: ['é','ê','í','É','Ê','Í'] },
@@ -2302,6 +2629,7 @@
       document.querySelector('.tb-btn[data-panel="phrases"] .tb-label').textContent = s.tbPhrases;
       document.querySelector('.tb-btn[data-panel="talk"] .tb-label').textContent    = s.tbTalk;
       document.querySelector('.tb-btn[data-panel="saved"] .tb-label').textContent   = s.tbSaved;
+      document.querySelector('.tb-btn[data-panel="learn"] .tb-label').textContent   = s.tbLearn;
       document.querySelector('.tb-btn[data-panel="more"] .tb-label').textContent    = s.tbMore;
 
       // Tone panel
@@ -2370,7 +2698,7 @@
 
     // ── Warmup: wake all serverless functions while user reads the page ──
     (function warmupFunctions() {
-      const endpoints = ["/api/translate", "/api/wordcard", "/api/alternatives"];
+      const endpoints = ["/api/translate", "/api/wordcard", "/api/alternatives", "/api/learn"];
       endpoints.forEach(ep => fetch(ep, { method: "OPTIONS" }).catch(() => {}));
     })();
 
@@ -2378,6 +2706,326 @@
     function track(name, props) {
       try { window.va?.("event", { name, ...props }); } catch(e) {}
     }
+
+    // ════════════════════════════════════════════════════════════════════
+    // ── LEARN MODE ──────────────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════════════
+    (function initLearn() {
+
+      // ── Populate language selects ──────────────────────────────────────
+      const nativeSel = document.getElementById("learnNativeSel");
+      const targetSel = document.getElementById("learnTargetSel");
+      const learnableLangs = Object.entries(langs).filter(([k]) => k !== "auto");
+
+      learnableLangs.forEach(([k, v]) => {
+        const o1 = new Option(`${v.flag} ${v.label}`, k);
+        const o2 = new Option(`${v.flag} ${v.label}`, k);
+        nativeSel.add(o1);
+        targetSel.add(o2);
+      });
+      // Default: native = Spanish, learning = English
+      nativeSel.value = "es";
+      targetSel.value = "en";
+
+      // ── Difficulty picker ──────────────────────────────────────────────
+      let difficulty = "Beginner";
+      document.querySelectorAll(".learn-diff-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".learn-diff-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          difficulty = btn.dataset.diff;
+        });
+      });
+
+      // ── Progress tracking (localStorage) ─────────────────────────────
+      function getProgress() {
+        try { return JSON.parse(localStorage.getItem("learnProgress") || "{}"); } catch { return {}; }
+      }
+      function saveProgress(p) {
+        try { localStorage.setItem("learnProgress", JSON.stringify(p)); } catch {}
+      }
+      function updateProgressUI() {
+        const p = getProgress();
+        const mastered = p.mastered || 0;
+        const streak   = p.streak   || 0;
+        const wrap = document.getElementById("learnProgressWrap");
+        if (mastered > 0 || streak > 0) {
+          wrap.style.display = "";
+          document.getElementById("learnProgressText").textContent = `${mastered} word${mastered!==1?"s":""} mastered`;
+          document.getElementById("learnStreakText").textContent    = `🔥 ${streak} day streak`;
+          document.getElementById("learnProgressFill").style.width  = `${Math.min(100, mastered)}%`;
+        }
+      }
+      updateProgressUI();
+
+      // ── Session state ──────────────────────────────────────────────────
+      let cards      = [];
+      let cardIndex  = 0;
+      let sessionScore = 0;
+      let masteredThisSession = 0;
+      let currentMode = "flashcard";
+      let cardFlipped = false;
+
+      // ── DOM refs ──────────────────────────────────────────────────────
+      const setup       = document.getElementById("learnSetup");
+      const session     = document.getElementById("learnSession");
+      const loading     = document.getElementById("learnLoading");
+      const cardWrap    = document.getElementById("learnCardWrap");
+      const complete    = document.getElementById("learnComplete");
+
+      // ── Start button ──────────────────────────────────────────────────
+      document.getElementById("learnStartBtn").addEventListener("click", startSession);
+      document.getElementById("learnAgainBtn").addEventListener("click", startSession);
+      document.getElementById("learnNewTopicBtn").addEventListener("click", () => {
+        complete.style.display = "none";
+        session.style.display  = "none";
+        setup.style.display    = "";
+      });
+      document.getElementById("learnBackBtn").addEventListener("click", () => {
+        session.style.display = "none";
+        setup.style.display   = "";
+        updateProgressUI();
+      });
+
+      async function startSession() {
+        const nativeLang = langs[nativeSel.value]?.label || "English";
+        const learnLang  = langs[targetSel.value]?.label || "Spanish";
+        const topic      = document.getElementById("learnTopicSel").value;
+
+        // Swap to session view
+        setup.style.display    = "none";
+        complete.style.display = "none";
+        session.style.display  = "";
+        loading.style.display  = "flex";
+        cardWrap.style.display = "none";
+
+        cardIndex   = 0;
+        sessionScore = 0;
+        masteredThisSession = 0;
+        updateSessionHeader();
+
+        try {
+          const res  = await fetch("/api/learn", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "generate", nativeLang, learnLang, topic, difficulty })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Failed");
+          cards = data.cards || [];
+          if (!cards.length) throw new Error("No cards returned");
+
+          loading.style.display  = "none";
+          cardWrap.style.display = "";
+          renderCard();
+          track("learn_session", { from: nativeLang, to: learnLang, topic, difficulty });
+        } catch (err) {
+          loading.innerHTML = `<span>⚠ ${err.message}. Please try again.</span>`;
+        }
+      }
+
+      // ── Mode tabs ──────────────────────────────────────────────────────
+      document.querySelectorAll(".learn-mode-tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".learn-mode-tab").forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+          currentMode = tab.dataset.mode;
+          renderCard();
+        });
+      });
+
+      // ── Render current card in current mode ───────────────────────────
+      function renderCard() {
+        if (cardIndex >= cards.length) { showComplete(); return; }
+        const card = cards[cardIndex];
+        const learnLang = langs[targetSel.value]?.label || "the target language";
+
+        updateSessionHeader();
+
+        // Hide all panes, show current
+        ["Flashcard","Choice","Type"].forEach(m =>
+          document.getElementById(`modePaneFlashcard`.replace("Flashcard", m === "Flashcard" ? "Flashcard" : m)).style.display = "none"
+        );
+        document.getElementById("modePaneFlashcard").style.display = currentMode === "flashcard" ? "" : "none";
+        document.getElementById("modePaneChoice").style.display    = currentMode === "choice"    ? "" : "none";
+        document.getElementById("modePaneType").style.display      = currentMode === "type"      ? "" : "none";
+
+        if (currentMode === "flashcard") renderFlashcard(card);
+        if (currentMode === "choice")    renderChoice(card, learnLang);
+        if (currentMode === "type")      renderType(card, learnLang);
+      }
+
+      // ── Flashcard ──────────────────────────────────────────────────────
+      function renderFlashcard(card) {
+        cardFlipped = false;
+        document.getElementById("learnCardFront").style.display = "";
+        document.getElementById("learnCardBack").style.display  = "none";
+        document.getElementById("learnFcBtns").style.display    = "none";
+        document.getElementById("learnCardPos").textContent     = card.part_of_speech || "";
+        document.getElementById("learnCardWord").textContent    = card.word;
+      }
+
+      document.getElementById("learnCard").addEventListener("click", () => {
+        if (cardFlipped || currentMode !== "flashcard") return;
+        const card = cards[cardIndex];
+        cardFlipped = true;
+        document.getElementById("learnCardFront").style.display       = "none";
+        document.getElementById("learnCardBack").style.display        = "";
+        document.getElementById("learnFcBtns").style.display          = "";
+        document.getElementById("learnCardTranslation").textContent   = card.translation;
+        document.getElementById("learnCardExample").textContent       = `"${card.example_learn}" — ${card.example_native}`;
+        document.getElementById("learnCardTipText").textContent       = card.tip;
+      });
+
+      document.getElementById("learnCardSpeakBtn").addEventListener("click", e => {
+        e.stopPropagation();
+        const card = cards[cardIndex];
+        const langCode = langs[targetSel.value]?.speech || "en-US";
+        doSpeak(card.word, langCode, null, () => {});
+      });
+
+      document.getElementById("learnFcRight").addEventListener("click", () => {
+        sessionScore += 10; masteredThisSession++;
+        cardIndex++; renderCard();
+      });
+      document.getElementById("learnFcWrong").addEventListener("click", () => {
+        // Move card to end so they see it again
+        cards.push(cards[cardIndex]);
+        cardIndex++; renderCard();
+      });
+
+      // ── Multiple choice ────────────────────────────────────────────────
+      function renderChoice(card, learnLang) {
+        document.getElementById("learnChoiceLangLabel").textContent = learnLang;
+        document.getElementById("learnChoiceWord").textContent      = card.word;
+        document.getElementById("learnChoiceNext").style.display    = "none";
+
+        // Build 4 options: correct + 3 random from other cards
+        const others = cards.filter((_, i) => i !== cardIndex)
+          .sort(() => Math.random() - 0.5).slice(0, 3);
+        const options = [card, ...others].sort(() => Math.random() - 0.5);
+
+        const container = document.getElementById("learnChoices");
+        container.innerHTML = "";
+        options.forEach(opt => {
+          const btn = document.createElement("button");
+          btn.className = "learn-choice-opt";
+          btn.textContent = opt.translation;
+          btn.addEventListener("click", () => {
+            container.querySelectorAll(".learn-choice-opt").forEach(b => b.disabled = true);
+            if (opt === card) {
+              btn.classList.add("correct");
+              sessionScore += 10; masteredThisSession++;
+            } else {
+              btn.classList.add("wrong");
+              // Highlight correct
+              container.querySelectorAll(".learn-choice-opt").forEach(b => {
+                if (b.textContent === card.translation) b.classList.add("correct");
+              });
+            }
+            document.getElementById("learnChoiceNext").style.display = "";
+          });
+          container.appendChild(btn);
+        });
+      }
+
+      document.getElementById("learnChoiceNext").addEventListener("click", () => {
+        cardIndex++; renderCard();
+      });
+
+      // ── Type it ────────────────────────────────────────────────────────
+      function renderType(card, learnLang) {
+        document.getElementById("learnTypeLangLabel").textContent = learnLang;
+        document.getElementById("learnTypeWord").textContent      = card.word;
+        document.getElementById("learnTypeExample").textContent   = card.example_native || "";
+        document.getElementById("learnTypeInput").value           = "";
+        document.getElementById("learnTypeInput").disabled        = false;
+        document.getElementById("learnTypeSubmit").disabled       = false;
+        document.getElementById("learnTypeFeedback").style.display = "none";
+        document.getElementById("learnTypeNext").style.display    = "none";
+      }
+
+      async function submitTypeAnswer() {
+        const input = document.getElementById("learnTypeInput");
+        const userAnswer = input.value.trim();
+        if (!userAnswer) return;
+
+        const card = cards[cardIndex];
+        const nativeLang = langs[nativeSel.value]?.label || "English";
+        const learnLang  = langs[targetSel.value]?.label || "Spanish";
+
+        input.disabled = true;
+        document.getElementById("learnTypeSubmit").disabled = true;
+        const feedback = document.getElementById("learnTypeFeedback");
+        feedback.className = "learn-type-feedback";
+        feedback.textContent = "Checking…";
+        feedback.style.display = "";
+
+        try {
+          const res = await fetch("/api/learn", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "evaluate", nativeLang, learnLang,
+              word: card.word, userAnswer, correctAnswer: card.translation
+            })
+          });
+          const data = await res.json();
+          const isCorrect = data.correct || data.score >= 70;
+          feedback.className = `learn-type-feedback ${isCorrect ? "correct" : "wrong"}`;
+          feedback.textContent = data.feedback || (isCorrect ? "✓ Correct!" : `✗ Correct answer: ${card.translation}`);
+          if (isCorrect) { sessionScore += Math.round((data.score / 100) * 10); masteredThisSession++; }
+        } catch {
+          feedback.className = "learn-type-feedback wrong";
+          feedback.textContent = `Correct answer: ${card.translation}`;
+        }
+
+        document.getElementById("learnTypeNext").style.display = "";
+      }
+
+      document.getElementById("learnTypeSubmit").addEventListener("click", submitTypeAnswer);
+      document.getElementById("learnTypeInput").addEventListener("keydown", e => {
+        if (e.key === "Enter") submitTypeAnswer();
+      });
+      document.getElementById("learnTypeNext").addEventListener("click", () => {
+        cardIndex++; renderCard();
+      });
+
+      // ── Session header update ──────────────────────────────────────────
+      function updateSessionHeader() {
+        const total = Math.max(cards.length, 8);
+        document.getElementById("learnCardCounter").textContent    = `${Math.min(cardIndex + 1, total)} / ${total}`;
+        document.getElementById("learnSessionScore").textContent   = `⭐ ${sessionScore}`;
+        document.getElementById("learnSessionBar").style.width     = `${Math.min(100, (cardIndex / total) * 100)}%`;
+      }
+
+      // ── Session complete ───────────────────────────────────────────────
+      function showComplete() {
+        cardWrap.style.display  = "none";
+        complete.style.display  = "";
+
+        const emoji = sessionScore >= 70 ? "🏆" : sessionScore >= 40 ? "🎉" : "💪";
+        document.getElementById("learnCompleteEmoji").textContent = emoji;
+
+        document.getElementById("learnCompleteStats").innerHTML = `
+          <div class="learn-complete-stat"><strong>${sessionScore}</strong>points</div>
+          <div class="learn-complete-stat"><strong>${masteredThisSession}</strong>mastered</div>
+          <div class="learn-complete-stat"><strong>${cards.length}</strong>cards</div>`;
+
+        // Save progress
+        const p = getProgress();
+        p.mastered = (p.mastered || 0) + masteredThisSession;
+        const today = new Date().toDateString();
+        p.streak = (p.lastDate === today)
+          ? p.streak
+          : (p.lastDate === new Date(Date.now() - 86400000).toDateString())
+            ? (p.streak || 0) + 1
+            : 1;
+        p.lastDate = today;
+        saveProgress(p);
+      }
+
+    })(); // end initLearn
   </script>
 </body>
 </html>

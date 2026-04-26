@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "Bash(where node:*)",
+      "Read(//usr/local/bin/**)",
+      "Read(//c/Program Files/**)",
+      "Bash(cmd //c \"where node\")",
+      "Bash(cmd //c \"where python\")",
+      "Bash(cmd //c \"python --version\")",
+      "Bash(cmd //c \"where python3\")",
+      "Bash(cmd //c \"where py\")",
+      "WebSearch",
+      "Bash(node --check \"C:\\\\Users\\\\alaza\\\\Claode folder\\\\public\\\\index.html\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(npm install *)"
+    ]
+  }
+}
