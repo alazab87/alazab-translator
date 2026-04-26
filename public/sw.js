@@ -1,4 +1,4 @@
-const CACHE = "alazab-v8";
+const CACHE = "alazab-v9";
 const APP_SHELL = ["/", "/index.html", "/icon.svg", "/manifest.json"];
 
 // Install: cache the app shell
