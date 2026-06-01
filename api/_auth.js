@@ -36,6 +36,7 @@ async function getUserFromRequest(req) {
     const cached = getCached(token);
     if (cached !== undefined) return cached;
 
+    if (!supabase) return null; // Supabase not configured — treat as anonymous
     const { data: { user }, error } = await supabase.auth.getUser(token);
     const result = (error || !user) ? null : user;
 
