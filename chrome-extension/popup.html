@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MeTranslate</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <div class="logo">🌐 MeTranslate</div>
+  </div>
+
+  <div class="lang-row">
+    <select class="lang-sel" id="srcSel">
+      <option value="Auto Detect">🌐 Auto Detect</option>
+      <option value="English">🇺🇸 English</option>
+      <option value="Spanish">🇪🇸 Spanish</option>
+      <option value="Latin American Spanish">🇲🇽 Latin American Spanish</option>
+      <option value="French">🇫🇷 French</option>
+      <option value="Arabic">🇸🇦 Arabic</option>
+      <option value="German">🇩🇪 German</option>
+      <option value="Italian">🇮🇹 Italian</option>
+      <option value="Brazilian Portuguese">🇧🇷 Brazilian Portuguese</option>
+      <option value="Chinese">🇨🇳 Chinese</option>
+      <option value="Japanese">🇯🇵 Japanese</option>
+      <option value="Korean">🇰🇷 Korean</option>
+      <option value="Russian">🇷🇺 Russian</option>
+      <option value="Hindi">🇮🇳 Hindi</option>
+      <option value="Turkish">🇹🇷 Turkish</option>
+    </select>
+
+    <button class="swap-btn" id="swapBtn" title="Swap languages">⇄</button>
+
+    <select class="lang-sel" id="tgtSel">
+      <option value="English">🇺🇸 English</option>
+      <option value="Spanish" selected>🇪🇸 Spanish</option>
+      <option value="Latin American Spanish">🇲🇽 Latin American Spanish</option>
+      <option value="French">🇫🇷 French</option>
+      <option value="Arabic">🇸🇦 Arabic</option>
+      <option value="German">🇩🇪 German</option>
+      <option value="Italian">🇮🇹 Italian</option>
+      <option value="Brazilian Portuguese">🇧🇷 Brazilian Portuguese</option>
+      <option value="Chinese">🇨🇳 Chinese</option>
+      <option value="Japanese">🇯🇵 Japanese</option>
+      <option value="Korean">🇰🇷 Korean</option>
+      <option value="Russian">🇷🇺 Russian</option>
+      <option value="Hindi">🇮🇳 Hindi</option>
+      <option value="Turkish">🇹🇷 Turkish</option>
+    </select>
+  </div>
+
+  <div class="input-area">
+    <textarea id="inputText" placeholder="Type or paste text to translate… (selected text auto-fills)" rows="4"></textarea>
+  </div>
+
+  <button class="translate-btn" id="translateBtn">Translate</button>
+
+  <div class="output-area placeholder" id="outputText">Translation will appear here…</div>
+
+  <div class="actions">
+    <button class="action-btn" id="copyBtn">📋 Copy</button>
+    <button class="action-btn" id="speakBtn">🔊 Speak</button>
+    <button class="action-btn" id="clearBtn">✕ Clear</button>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <a class="open-app-link" href="https://amatranslate.app" target="_blank">
+    Open full app at amatranslate.app ↗
+  </a>
+
+  <script src="popup.js"></script>
+</body>
+</html>
