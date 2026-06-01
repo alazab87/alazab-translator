@@ -7,7 +7,7 @@ const { supabase } = require("./_supabase");
 async function getUserFromRequest(req) {
   try {
     const authHeader = req.headers["authorization"] || "";
-    const token = authHeader.replace("Bearer ", "").trim();
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
     if (!token) return null;
 
     const { data: { user }, error } = await supabase.auth.getUser(token);
