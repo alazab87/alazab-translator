@@ -467,6 +467,155 @@
     .auth-dd-item { background:none; border:none; color:var(--text); font-family:inherit; font-size:0.82rem; padding:0.4rem 0.6rem; cursor:pointer; border-radius:0.4rem; width:100%; text-align:left; transition:background 0.15s; }
     .auth-dd-item:hover { background:rgba(108,99,255,0.1); }
     .auth-dd-item.danger { color:#ef4444; }
+
+/* ── Modern UI Enhancements ─────────────────────────────────────────── */
+
+/* Animated logo gradient */
+@keyframes gradientFlow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Translation result fade-in */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Shimmer loading skeleton */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+/* Ripple effect */
+@keyframes rippleOut {
+  from { transform: scale(0); opacity: 0.4; }
+  to   { transform: scale(4); opacity: 0; }
+}
+
+/* Glow pulse on panels */
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(108,99,255,0); }
+  50%       { box-shadow: 0 0 18px 2px rgba(108,99,255,0.18); }
+}
+
+/* Animated logo */
+.logo-text {
+  background: linear-gradient(90deg, #a78bfa, #6c63ff, #818cf8, #a78bfa);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientFlow 4s ease infinite;
+}
+
+/* Translation result reveal */
+.output-reveal {
+  animation: fadeInUp 0.35s ease forwards;
+}
+
+/* Shimmer while loading */
+.output-shimmer {
+  background: linear-gradient(90deg, var(--surface2) 25%, rgba(108,99,255,0.08) 50%, var(--surface2) 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 0.4rem;
+  color: transparent !important;
+  min-height: 2.5rem;
+  pointer-events: none;
+}
+
+/* Panel hover glow */
+.panel {
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.panel:focus-within {
+  box-shadow: 0 0 0 2px rgba(108,99,255,0.25), 0 4px 24px rgba(108,99,255,0.1);
+  border-color: rgba(108,99,255,0.4) !important;
+}
+
+/* Button micro-interactions */
+button {
+  position: relative;
+  overflow: hidden;
+}
+.ripple-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  pointer-events: none;
+  animation: rippleOut 0.5s ease forwards;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  margin-left: -4px;
+}
+
+/* Language selector active glow */
+.lang-btn.active-lang {
+  box-shadow: 0 0 0 2px var(--accent), 0 0 12px rgba(108,99,255,0.3);
+}
+
+/* Tab sliding indicator */
+.tab-bar {
+  position: relative;
+}
+.tab-bar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 2px;
+  transition: left 0.25s cubic-bezier(.4,0,.2,1), width 0.25s cubic-bezier(.4,0,.2,1);
+}
+
+/* Word card enhanced entrance */
+#wordCard {
+  transition: opacity 0.3s ease;
+}
+
+/* Translate button glow on hover */
+.translate-action-btn:hover, #translateBtn:hover {
+  box-shadow: 0 0 20px rgba(108,99,255,0.4);
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+/* Swap button enhanced */
+.swap-btn {
+  transition: transform 0.4s cubic-bezier(.4,0,.2,1), box-shadow 0.2s !important;
+}
+.swap-btn:hover {
+  box-shadow: 0 0 16px rgba(108,99,255,0.35) !important;
+}
+.swap-btn.spinning {
+  transform: rotate(180deg) !important;
+}
+
+/* Action buttons (copy, speak, etc.) */
+.action-icon-btn {
+  transition: transform 0.15s ease, color 0.15s ease, background 0.15s ease !important;
+}
+.action-icon-btn:hover {
+  transform: scale(1.15) !important;
+}
+.action-icon-btn:active {
+  transform: scale(0.92) !important;
+}
+
+/* Input textarea smooth focus */
+textarea, .input-area {
+  transition: border-color 0.25s ease, box-shadow 0.25s ease !important;
+}
+textarea:focus {
+  box-shadow: 0 0 0 2px rgba(108,99,255,0.2) !important;
+}
+
+/* Status dot improvements */
+.dot { transition: background 0.3s ease; }
   </style>
 </head>
 <body>
@@ -483,7 +632,7 @@
 
   <header>
     <button class="theme-btn" id="themeBtn" title="Toggle light/dark mode">🌙</button>
-    <div class="logo"><span class="logo-icon">🌐</span> MeTranslate</div>
+    <div class="logo"><span class="logo-icon">🌐</span> <span class="logo-text">MeTranslate</span></div>
     <p class="tagline" id="tagline">Smart · Direct · Accurate · Instant</p>
     <div class="ui-lang-bar" id="uiLangBar">
       <span class="ui-lang-lbl" id="uiLangLabel">App language:</span>
@@ -1598,7 +1747,7 @@
 
       // Prepare output area for streaming
       outputText.innerHTML = "";
-      outputText.className = "output-text";
+      outputText.className = "output-text output-shimmer";
       outputText.dir = langs[tgtLang]?.rtl ? "rtl" : "ltr";
       document.getElementById("romanizationText").style.display = "none";
       document.getElementById("altHint").style.opacity = "0";
@@ -1658,6 +1807,7 @@
               }
               if (ev.type === "delta") {
                 fullText += ev.text;
+                outputText.classList.remove("output-shimmer");
                 streamTextNode.textContent = fullText;   // live update
               }
               if (ev.type === "romanization") {
@@ -3325,6 +3475,33 @@
         }
       }
     })();
+
+// ── Ripple effect on buttons ────────────────────────────────────────
+document.addEventListener("click", function(e) {
+  const btn = e.target.closest("button");
+  if (!btn || btn.classList.contains("no-ripple")) return;
+  const r = document.createElement("span");
+  r.className = "ripple-circle";
+  r.style.left = (e.clientX - btn.getBoundingClientRect().left) + "px";
+  r.style.top  = (e.clientY - btn.getBoundingClientRect().top)  + "px";
+  btn.appendChild(r);
+  r.addEventListener("animationend", () => r.remove());
+});
+
+// ── Translation result animation ────────────────────────────────────
+(function patchOutputAnimation() {
+  const outputEl = document.getElementById("outputText");
+  if (!outputEl) return;
+  const obs = new MutationObserver(() => {
+    const text = outputEl.textContent.trim();
+    if (text && text !== "…" && !outputEl.classList.contains("output-shimmer")) {
+      outputEl.classList.remove("output-reveal");
+      void outputEl.offsetWidth; // force reflow
+      outputEl.classList.add("output-reveal");
+    }
+  });
+  obs.observe(outputEl, { childList: true, subtree: true, characterData: true });
+})();
   </script>
 </body>
 </html>
