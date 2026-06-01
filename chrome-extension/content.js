@@ -16,7 +16,7 @@ document.addEventListener("mouseup", () => {
 document.addEventListener("keyup", (e) => {
   if (e.shiftKey || e.key === "a" && (e.ctrlKey || e.metaKey)) {
     const selected = window.getSelection()?.toString().trim();
-    if (selected && selected.length > 1) {
+    if (selected && selected.length > 1 && selected.length < 2000) {
       chrome.runtime.sendMessage({ type: "SELECTED_TEXT", text: selected });
     }
   }
