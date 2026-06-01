@@ -12,20 +12,14 @@ const clearBtn     = document.getElementById("clearBtn");
 const statusEl     = document.getElementById("status");
 
 let currentTranslation = "";
-
-// ── Auto-fill selected text from the page ──────────────────────────
-chrome.storage.session.get("selectedText", ({ selectedText }) => {
-  if (selectedText) {
-    inputText.value = selectedText;
-    chrome.storage.session.remove("selectedText");
-    translate(); // auto-translate immediately
-  }
-});
+let isTranslating = false;
 
 // ── Translate ──────────────────────────────────────────────────────
 async function translate() {
+  if (isTranslating) return;
   const text = inputText.value.trim();
   if (!text) return;
+  isTranslating = true;
 
   const srcLang = srcSel.value;
   const tgtLang = tgtSel.value;
@@ -56,6 +50,7 @@ async function translate() {
     outputText.className = "output-area";
   } finally {
     translateBtn.disabled = false;
+    isTranslating = false;
   }
 }
 
@@ -83,8 +78,12 @@ swapBtn.addEventListener("click", () => {
 
 copyBtn.addEventListener("click", async () => {
   if (!currentTranslation) return;
-  await navigator.clipboard.writeText(currentTranslation);
-  copyBtn.textContent = "✓ Copied!";
+  try {
+    await navigator.clipboard.writeText(currentTranslation);
+    copyBtn.textContent = "✓ Copied!";
+  } catch {
+    copyBtn.textContent = "✗ Failed";
+  }
   setTimeout(() => { copyBtn.textContent = "📋 Copy"; }, 1500);
 });
 
@@ -108,8 +107,16 @@ clearBtn.addEventListener("click", () => {
 srcSel.addEventListener("change", () => chrome.storage.sync.set({ extSrcLang: srcSel.value }));
 tgtSel.addEventListener("change", () => chrome.storage.sync.set({ extTgtLang: tgtSel.value }));
 
-// Restore saved language preferences on open
+// Restore language prefs first, then auto-fill — order matters to avoid wrong-language translate
 chrome.storage.sync.get(["extSrcLang", "extTgtLang"], ({ extSrcLang, extTgtLang }) => {
   if (extSrcLang) srcSel.value = extSrcLang;
   if (extTgtLang) tgtSel.value = extTgtLang;
+  // Auto-fill selected text only after language prefs are restored
+  chrome.storage.session.get("selectedText", ({ selectedText }) => {
+    if (selectedText) {
+      inputText.value = selectedText;
+      chrome.storage.session.remove("selectedText");
+      translate();
+    }
+  });
 });
