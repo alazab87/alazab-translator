@@ -1,5 +1,6 @@
 const Anthropic = require("@anthropic-ai/sdk");
 const { checkLimit, translateLimiter } = require("./_ratelimit");
+const { getUserFromRequest } = require("./_auth");
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -28,6 +29,8 @@ module.exports = async function handler(req, res) {
 
   const limited = await checkLimit(translateLimiter, req);
   if (limited) return res.status(429).json(limited);
+  const user = await getUserFromRequest(req);
+  req.userId = user?.id || null;
 
   const formalityNote =
     formality === "formal" ? " Use formal, polite register." :
