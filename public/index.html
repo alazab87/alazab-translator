@@ -13,6 +13,7 @@
   <meta name="description" content="Smart real-time AI translation powered by Claude — 9 languages, voice, camera, and more." />
   <!-- Vercel Web Analytics -->
   <script defer src="/_vercel/insights/script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -437,6 +438,35 @@
     .learn-complete-stats { display: flex; gap: 1.2rem; justify-content: center; font-size: 0.88rem; color: var(--text-muted); }
     .learn-complete-stat { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; }
     .learn-complete-stat strong { font-size: 1.3rem; color: var(--text); }
+
+    /* ── Auth ─────────────────────────────────────────────────────────── */
+    .auth-btn { position:absolute; top:1rem; left:1rem; background:rgba(108,99,255,0.12); border:1px solid var(--accent); border-radius:2rem; color:var(--accent2); font-family:inherit; font-size:0.75rem; font-weight:700; padding:0.3rem 0.85rem; cursor:pointer; transition:all 0.2s; }
+    .auth-btn:hover { background:rgba(108,99,255,0.25); }
+    .auth-avatar { position:absolute; top:1rem; left:1rem; width:2rem; height:2rem; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; color:#fff; font-size:0.75rem; font-weight:700; cursor:pointer; display:none; align-items:center; justify-content:center; }
+    .auth-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center; }
+    .auth-modal-overlay.show { display:flex; }
+    .auth-modal { background:var(--surface); border:1px solid var(--border); border-radius:1rem; padding:1.5rem; width:90%; max-width:360px; display:flex; flex-direction:column; gap:1rem; }
+    .auth-modal h2 { font-size:1.1rem; color:var(--accent2); margin:0; text-align:center; }
+    .auth-tabs { display:flex; gap:0.4rem; }
+    .auth-tab { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:0.5rem; color:var(--text-muted); font-family:inherit; font-size:0.82rem; padding:0.4rem; cursor:pointer; transition:all 0.15s; }
+    .auth-tab.active { background:rgba(108,99,255,0.15); border-color:var(--accent); color:var(--accent2); font-weight:700; }
+    .auth-input { background:var(--surface2); border:1px solid var(--border); border-radius:0.6rem; color:var(--text); font-family:inherit; font-size:0.9rem; padding:0.55rem 0.8rem; outline:none; transition:border-color 0.2s; width:100%; box-sizing:border-box; }
+    .auth-input:focus { border-color:var(--accent); }
+    .auth-submit { background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; border-radius:0.6rem; color:#fff; font-family:inherit; font-size:0.9rem; font-weight:700; padding:0.65rem; cursor:pointer; transition:opacity 0.2s; }
+    .auth-submit:hover { opacity:0.88; }
+    .auth-divider { text-align:center; color:var(--text-muted); font-size:0.75rem; }
+    .auth-magic-btn { background:none; border:1px solid var(--border); border-radius:0.6rem; color:var(--text-muted); font-family:inherit; font-size:0.82rem; padding:0.55rem; cursor:pointer; transition:all 0.15s; }
+    .auth-magic-btn:hover { border-color:var(--accent); color:var(--accent2); }
+    .auth-msg { font-size:0.8rem; text-align:center; min-height:1.2em; }
+    .auth-msg.error { color:#ef4444; }
+    .auth-msg.success { color:#22c55e; }
+    .auth-close { background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; align-self:flex-end; padding:0; line-height:1; }
+    .auth-dropdown { display:none; position:absolute; top:3.2rem; left:1rem; background:var(--surface2); border:1px solid var(--border); border-radius:0.75rem; padding:0.4rem; z-index:200; min-width:160px; box-shadow:0 8px 24px rgba(0,0,0,0.4); }
+    .auth-dropdown.open { display:block; }
+    .auth-dd-email { font-size:0.72rem; color:var(--text-muted); padding:0.3rem 0.6rem 0.5rem; border-bottom:1px solid var(--border); margin-bottom:0.3rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px; }
+    .auth-dd-item { background:none; border:none; color:var(--text); font-family:inherit; font-size:0.82rem; padding:0.4rem 0.6rem; cursor:pointer; border-radius:0.4rem; width:100%; text-align:left; transition:background 0.15s; }
+    .auth-dd-item:hover { background:rgba(108,99,255,0.1); }
+    .auth-dd-item.danger { color:#ef4444; }
   </style>
 </head>
 <body>
@@ -804,6 +834,31 @@
     </div>
 
   </main>
+
+  <!-- Auth modal -->
+  <button class="auth-btn" id="authBtn">Sign In</button>
+  <button class="auth-avatar" id="authAvatar"></button>
+  <div class="auth-dropdown" id="authDropdown">
+    <div class="auth-dd-email" id="authDdEmail"></div>
+    <button class="auth-dd-item danger" id="authSignOutBtn">Sign out</button>
+  </div>
+
+  <div class="auth-modal-overlay" id="authOverlay">
+    <div class="auth-modal">
+      <button class="auth-close" id="authClose">✕</button>
+      <h2>Welcome to MeTranslate</h2>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-authtab="signin">Sign In</button>
+        <button class="auth-tab" data-authtab="signup">Sign Up</button>
+      </div>
+      <input class="auth-input" id="authEmail" type="email" placeholder="Email address" autocomplete="email">
+      <input class="auth-input" id="authPassword" type="password" placeholder="Password" autocomplete="current-password">
+      <button class="auth-submit" id="authSubmit">Sign In</button>
+      <div class="auth-divider">— or —</div>
+      <button class="auth-magic-btn" id="authMagicBtn">✉️ Send magic link (no password)</button>
+      <p class="auth-msg" id="authMsg"></p>
+    </div>
+  </div>
 
   <!-- Image Lens modal -->
   <div class="lens-modal" id="lensModal">
@@ -1204,7 +1259,7 @@
       altPopup.style.left = Math.max(4, Math.min(rect.left, window.innerWidth-164))+"px";
       document.body.appendChild(altPopup);
       try {
-        const res=await fetch("/api/alternatives",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({word:cleanWord,context:currentTranslation,tgtLang:langs[tgtLang].label})});
+        const res=await fetch("/api/alternatives",{method:"POST",headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},body:JSON.stringify({word:cleanWord,context:currentTranslation,tgtLang:langs[tgtLang].label})});
         const json=await res.json();
         if (!json.alternatives?.length) throw new Error();
         altPopup.innerHTML=`<div class="alt-header">${(uiStrings[currentUiLang]||uiStrings.en).altSwap} "${cleanWord}"</div>`+json.alternatives.map((a,i)=>`<div class="alt-option" data-i="${i}">${escHtml(a)}</div>`).join("");
@@ -1231,7 +1286,7 @@
       const romanEl = document.getElementById("romanizationText");
       romanEl.textContent = "🔤 …"; romanEl.style.display = "block";
       try {
-        const res = await fetch("/api/romanize",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,lang:langs[tgtLang].label})});
+        const res = await fetch("/api/romanize",{method:"POST",headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},body:JSON.stringify({text,lang:langs[tgtLang].label})});
         const json = await res.json();
         if (json.romanization) romanEl.textContent = "🔤 "+json.romanization;
       } catch { romanEl.style.display = "none"; }
@@ -1347,7 +1402,7 @@
     // Returns a string[] in the same order. Falls back to original phrases on error.
     async function translatePhrases(phrases, targetLangLabel) {
       const numbered = phrases.map((p,i)=>`${i+1}. ${p}`).join("\n");
-      const res = await fetch("/api/translate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:numbered,srcLang:"English",tgtLang:targetLangLabel,formality:"neutral"})});
+      const res = await fetch("/api/translate",{method:"POST",headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},body:JSON.stringify({text:numbered,srcLang:"English",tgtLang:targetLangLabel,formality:"neutral"})});
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       // Parse numbered lines back
@@ -1479,7 +1534,7 @@
       const translations=[];
       for (let i=0;i<chunks.length;i++) {
         setStatus(`Translating ${i+1} of ${chunks.length}…`);
-        const res=await fetch("/api/translate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:chunks[i],srcLang:srcLang==="auto"?"Auto Detect":langs[srcLang].label,tgtLang:langs[tgtLang].label,formality})});
+        const res=await fetch("/api/translate",{method:"POST",headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},body:JSON.stringify({text:chunks[i],srcLang:srcLang==="auto"?"Auto Detect":langs[srcLang].label,tgtLang:langs[tgtLang].label,formality})});
         const json=await res.json();
         if (json.error) throw new Error(json.error);
         translations.push(json.translation);
@@ -1557,7 +1612,7 @@
       try {
         const res = await fetch("/api/translate", {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
+          headers: { "Content-Type": "application/json", "Accept": "text/event-stream", ...(window._meTranslateToken ? { "Authorization": `Bearer ${window._meTranslateToken}` } : {}) },
           body: JSON.stringify({
             text,
             srcLang:   srcLang === "auto" ? "Auto Detect" : langs[srcLang].label,
@@ -1885,9 +1940,9 @@
 
           try {
             const [regRes, txtRes] = await Promise.all([
-              fetch("/api/ocr-regions", { method:"POST", headers:{"Content-Type":"application/json"},
+              fetch("/api/ocr-regions", { method:"POST", headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},
                 body: JSON.stringify({ imageBase64: base64, mediaType, tgtLang: langs[tgtLang].label }) }),
-              fetch("/api/vision",      { method:"POST", headers:{"Content-Type":"application/json"},
+              fetch("/api/vision",      { method:"POST", headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},
                 body: JSON.stringify({ imageBase64: base64, mediaType }) })
             ]);
 
@@ -1958,7 +2013,7 @@
       try {
         const sl = srcLang === "auto" ? (detectedLang || "English") : langs[srcLang].label;
         const res = await fetch("/api/wordcard", {
-          method: "POST", headers: {"Content-Type":"application/json"},
+          method: "POST", headers: {"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},
           body: JSON.stringify({ word, srcLang: sl, tgtLang: langs[tgtLang].label }),
           signal: wcAbort.signal
         });
@@ -2207,7 +2262,7 @@
       addConvBubble(msgId, which, text, null, false);
 
       try {
-        const res  = await fetch("/api/translate",{method:"POST",headers:{"Content-Type":"application/json"},
+        const res  = await fetch("/api/translate",{method:"POST",headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},
           body:JSON.stringify({text, srcLang:langs[fromCode].label, tgtLang:langs[toCode].label, formality})});
         const json = await res.json();
         if (json.translation) {
@@ -2928,7 +2983,7 @@
         try {
           const res  = await fetch("/api/learn", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", ...(window._meTranslateToken ? { "Authorization": `Bearer ${window._meTranslateToken}` } : {}) },
             body: JSON.stringify({ action: "generate", nativeLang, learnLang, topic, difficulty })
           });
           const data = await res.json();
@@ -3085,7 +3140,7 @@
         try {
           const res = await fetch("/api/learn", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", ...(window._meTranslateToken ? { "Authorization": `Bearer ${window._meTranslateToken}` } : {}) },
             body: JSON.stringify({
               action: "evaluate", nativeLang, learnLang,
               word: card.word, userAnswer, correctAnswer: card.translation
@@ -3147,6 +3202,123 @@
       }
 
     })(); // end initLearn
+
+    // ════════════════════════════════════════════════════════════════════
+    // ── AUTH ────────────────────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════════════
+    (function initAuth() {
+      const SUPABASE_URL      = "https://xtszjwyxrtcasthysnqt.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0c3pqd3l4cnRjYXN0aHlzbnF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyODU3MzIsImV4cCI6MjA5NTg2MTczMn0.fgG6kqahVzzF6gYHhDgpWGhQb_RwpopAuIUEfMl4Jc4";
+
+      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const authBtn      = document.getElementById("authBtn");
+      const authAvatar   = document.getElementById("authAvatar");
+      const authDropdown = document.getElementById("authDropdown");
+      const authOverlay  = document.getElementById("authOverlay");
+      const authClose    = document.getElementById("authClose");
+      const authSubmit   = document.getElementById("authSubmit");
+      const authMagicBtn = document.getElementById("authMagicBtn");
+      const authMsg      = document.getElementById("authMsg");
+      const authEmail    = document.getElementById("authEmail");
+      const authPassword = document.getElementById("authPassword");
+      const authDdEmail  = document.getElementById("authDdEmail");
+      const authSignOut  = document.getElementById("authSignOutBtn");
+
+      let currentTab  = "signin";
+      let currentUser = null;
+
+      // Tab switching
+      document.querySelectorAll(".auth-tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".auth-tab").forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+          currentTab = tab.dataset.authtab;
+          authSubmit.textContent = currentTab === "signin" ? "Sign In" : "Create Account";
+          authMsg.textContent = "";
+        });
+      });
+
+      // Open / close modal
+      authBtn.addEventListener("click", () => authOverlay.classList.add("show"));
+      authClose.addEventListener("click", () => { authOverlay.classList.remove("show"); authMsg.textContent = ""; });
+      authOverlay.addEventListener("click", e => { if (e.target === authOverlay) authOverlay.classList.remove("show"); });
+
+      // Avatar dropdown
+      authAvatar.addEventListener("click", e => {
+        e.stopPropagation();
+        authDropdown.classList.toggle("open");
+      });
+      document.addEventListener("click", () => authDropdown.classList.remove("open"));
+
+      // Sign out
+      authSignOut.addEventListener("click", async () => {
+        await sb.auth.signOut();
+        authDropdown.classList.remove("open");
+      });
+
+      // Submit (sign in or sign up)
+      authSubmit.addEventListener("click", async () => {
+        const email    = authEmail.value.trim();
+        const password = authPassword.value;
+        if (!email || !password) { showMsg("Please enter email and password.", "error"); return; }
+
+        authSubmit.disabled = true;
+        authSubmit.textContent = "Please wait…";
+
+        const { error } = currentTab === "signup"
+          ? await sb.auth.signUp({ email, password })
+          : await sb.auth.signInWithPassword({ email, password });
+
+        authSubmit.disabled = false;
+        authSubmit.textContent = currentTab === "signin" ? "Sign In" : "Create Account";
+
+        if (error) { showMsg(error.message, "error"); }
+        else if (currentTab === "signup") { showMsg("✓ Check your email to confirm your account.", "success"); }
+        else { authOverlay.classList.remove("show"); }
+      });
+
+      // Magic link
+      authMagicBtn.addEventListener("click", async () => {
+        const email = authEmail.value.trim();
+        if (!email) { showMsg("Enter your email first.", "error"); return; }
+        authMagicBtn.disabled = true;
+        const { error } = await sb.auth.signInWithOtp({ email });
+        authMagicBtn.disabled = false;
+        showMsg(error ? error.message : "✓ Magic link sent! Check your email.", error ? "error" : "success");
+      });
+
+      function showMsg(text, type) {
+        authMsg.textContent = text;
+        authMsg.className = `auth-msg ${type}`;
+      }
+
+      // Session state listener
+      sb.auth.onAuthStateChange((_event, session) => {
+        currentUser = session?.user || null;
+        window._meTranslateToken = session?.access_token || null;
+        updateAuthUI();
+      });
+
+      // Restore session on load
+      sb.auth.getSession().then(({ data: { session } }) => {
+        currentUser = session?.user || null;
+        window._meTranslateToken = session?.access_token || null;
+        updateAuthUI();
+      });
+
+      function updateAuthUI() {
+        if (currentUser) {
+          authBtn.style.display    = "none";
+          authAvatar.style.display = "flex";
+          authAvatar.textContent   = (currentUser.email || "U").slice(0, 2).toUpperCase();
+          authDdEmail.textContent  = currentUser.email;
+        } else {
+          authBtn.style.display    = "";
+          authAvatar.style.display = "none";
+        }
+      }
+    })();
   </script>
 </body>
 </html>
