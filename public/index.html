@@ -3244,6 +3244,11 @@
       authClose.addEventListener("click", () => { authOverlay.classList.remove("show"); authMsg.textContent = ""; });
       authOverlay.addEventListener("click", e => { if (e.target === authOverlay) authOverlay.classList.remove("show"); });
 
+      // Enter key in modal inputs triggers submit
+      [authEmail, authPassword].forEach(el =>
+        el.addEventListener("keydown", e => { if (e.key === "Enter") authSubmit.click(); })
+      );
+
       // Avatar dropdown
       authAvatar.addEventListener("click", e => {
         e.stopPropagation();
@@ -3253,8 +3258,9 @@
 
       // Sign out
       authSignOut.addEventListener("click", async () => {
-        await sb.auth.signOut();
+        const { error } = await sb.auth.signOut();
         authDropdown.classList.remove("open");
+        if (error) showMsg("Sign-out failed: " + error.message, "error");
       });
 
       // Submit (sign in or sign up)
