@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Alazab Translator</title>
+  <title>MeTranslate</title>
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#6c63ff" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Alazab" />
+  <meta name="apple-mobile-web-app-title" content="MeTranslate" />
   <link rel="apple-touch-icon" href="/icon.svg" />
   <meta name="description" content="Smart real-time AI translation powered by Claude — 9 languages, voice, camera, and more." />
   <!-- Vercel Web Analytics -->
@@ -445,7 +445,7 @@
   <div class="install-banner" id="installBanner">
     <span style="font-size:1.3rem">🌐</span>
     <span class="install-banner-text" id="installBannerText">
-      <strong>Install Alazab Translator</strong> — use it like an app, works offline too!
+      <strong>Install MeTranslate</strong> — use it like an app, works offline too!
     </span>
     <button class="install-banner-btn" id="installBtn">Install</button>
     <button class="install-banner-dismiss" id="installDismiss" title="Dismiss">✕</button>
@@ -453,7 +453,7 @@
 
   <header>
     <button class="theme-btn" id="themeBtn" title="Toggle light/dark mode">🌙</button>
-    <div class="logo"><span class="logo-icon">🌐</span> Alazab Translator</div>
+    <div class="logo"><span class="logo-icon">🌐</span> MeTranslate</div>
     <p class="tagline" id="tagline">Smart · Direct · Accurate · Instant</p>
     <div class="ui-lang-bar" id="uiLangBar">
       <span class="ui-lang-lbl" id="uiLangLabel">App language:</span>
@@ -842,7 +842,7 @@
   </div>
 
   <footer>
-    Powered by <strong>Claude AI</strong> · Alazab Translator © 2025
+    Powered by <strong>Claude AI</strong> · MeTranslate © 2026
   </footer>
 
   <script>
@@ -1926,7 +1926,7 @@
       const shareText = `${sl.flag} ${sl.label} → ${tl.flag} ${tl.label}\n\n${src}\n\n${tgt}`;
       const btn = document.getElementById("shareBtn");
       if (navigator.share) {
-        try { await navigator.share({ title: "Alazab Translator", text: shareText }); } catch {}
+        try { await navigator.share({ title: "MeTranslate", text: shareText }); } catch {}
       } else {
         await navigator.clipboard.writeText(shareText).catch(()=>{});
         btn.textContent = "✓"; btn.classList.add("copied");
@@ -2154,15 +2154,30 @@
       }
 
       rec.onresult = e => {
-        const results   = Array.from(e.results);
-        const transcript = results.map(r => r[0].transcript).join("");
-        const isFinal   = results[results.length - 1].isFinal;
+        // Use e.resultIndex so we only read the NEW/changed result — not the
+        // entire accumulated session history. This prevents "sayingthatsaying" duplication.
+        let transcript = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const t = e.results[i][0].transcript.trim();
+          if (t) transcript += (transcript ? ' ' : '') + t;
+        }
+        if (!transcript) return;
+        const isFinal = e.results[e.results.length - 1].isFinal;
 
-        // Show live interim text
-        if (!interimId) { interimId = "interim-"+Date.now(); addConvBubble(interimId, which, transcript, null, true); }
-        else updateConvBubbleOrig(interimId, transcript, !isFinal);
+        // Show/update a single live interim bubble for this utterance
+        if (!interimId) {
+          interimId = "interim-" + Date.now();
+          addConvBubble(interimId, which, transcript, null, true);
+        } else {
+          updateConvBubbleOrig(interimId, transcript, !isFinal);
+        }
 
-        if (isFinal) armSilenceTimer(transcript); // restart 2.5 s countdown
+        if (isFinal) {
+          // Commit this utterance and clear the interim bubble
+          // so the next sentence starts with a fresh bubble
+          armSilenceTimer(transcript);
+          if (interimId) { removeConvBubble(interimId); interimId = null; }
+        }
       };
 
       rec.onend = () => {

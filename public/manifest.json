@@ -1,6 +1,6 @@
 {
-  "name": "Alazab Translator",
-  "short_name": "Alazab",
+  "name": "MeTranslate",
+  "short_name": "MeTranslate",
   "description": "Smart, real-time AI translation powered by Claude",
   "start_url": "/",
   "scope": "/",
