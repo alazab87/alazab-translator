@@ -39,8 +39,12 @@ const visionLimiterAuth = new Ratelimit({
 });
 
 function getIp(req) {
+  const xff = req.headers["x-forwarded-for"];
+  if (xff) {
+    const parts = xff.split(",");
+    return parts[parts.length - 1].trim(); // Vercel appends real client IP last
+  }
   return (
-    (req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
     req.headers["x-real-ip"] ||
     req.socket?.remoteAddress ||
     "unknown"
@@ -57,7 +61,8 @@ async function checkLimitForUser(anonLimiter, authLimiter, req, userId) {
     const limiter = userId ? authLimiter : anonLimiter;
     const { success, limit, remaining, reset } = await limiter.limit(key);
     if (!success) {
-      const retryMins = Math.ceil((reset - Date.now()) / 60000);
+      const retryMs = reset > 1e12 ? reset : reset * 1000; // normalize: ms if > 1e12, else seconds
+      const retryMins = Math.max(1, Math.ceil((retryMs - Date.now()) / 60000));
       return {
         error: `Rate limit reached. You can make ${limit} requests per hour. Please try again in ${retryMins} minute${retryMins !== 1 ? "s" : ""}.`,
         retryAfter: retryMins,
