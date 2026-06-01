@@ -1,31 +1,43 @@
 const { Ratelimit } = require("@upstash/ratelimit");
 const { Redis }     = require("@upstash/redis");
 
-// One shared Redis client
 const redis = new Redis({
   url:   process.env.UPSTASH_REDIS_REST_URL,
   token: process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
-// 30 translations per hour per IP (sliding window)
+// Anonymous users: 30 translations per hour per IP
 const translateLimiter = new Ratelimit({
   redis,
   limiter:   Ratelimit.slidingWindow(30, "1 h"),
-  prefix:    "rl:translate",
+  prefix:    "rl:translate:anon",
   analytics: true,
 });
 
-// 10 image scans per hour per IP (vision is expensive)
+// Authenticated users: 100 translations per hour per user ID
+const translateLimiterAuth = new Ratelimit({
+  redis,
+  limiter:   Ratelimit.slidingWindow(100, "1 h"),
+  prefix:    "rl:translate:auth",
+  analytics: true,
+});
+
+// Anonymous vision: 10 per hour per IP
 const visionLimiter = new Ratelimit({
   redis,
   limiter:   Ratelimit.slidingWindow(10, "1 h"),
-  prefix:    "rl:vision",
+  prefix:    "rl:vision:anon",
   analytics: true,
 });
 
-/**
- * Get the real client IP from a Vercel request.
- */
+// Authenticated vision: 30 per hour per user ID
+const visionLimiterAuth = new Ratelimit({
+  redis,
+  limiter:   Ratelimit.slidingWindow(30, "1 h"),
+  prefix:    "rl:vision:auth",
+  analytics: true,
+});
+
 function getIp(req) {
   return (
     (req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
@@ -36,15 +48,14 @@ function getIp(req) {
 }
 
 /**
- * Check rate limit. Returns null if OK, or a 429 response body if exceeded.
- * Usage:
- *   const limited = await checkLimit(translateLimiter, req);
- *   if (limited) return res.status(429).json(limited);
+ * Check rate limit using user ID if logged in, otherwise fall back to IP.
+ * Pass the anonymous limiter and the authenticated limiter separately.
  */
-async function checkLimit(limiter, req) {
+async function checkLimitForUser(anonLimiter, authLimiter, req, userId) {
   try {
-    const ip = getIp(req);
-    const { success, limit, remaining, reset } = await limiter.limit(ip);
+    const key    = userId ? `user:${userId}` : getIp(req);
+    const limiter = userId ? authLimiter : anonLimiter;
+    const { success, limit, remaining, reset } = await limiter.limit(key);
     if (!success) {
       const retryMins = Math.ceil((reset - Date.now()) / 60000);
       return {
@@ -52,12 +63,23 @@ async function checkLimit(limiter, req) {
         retryAfter: retryMins,
       };
     }
-    return null; // all good
-  } catch (e) {
-    // If Redis is down, fail open — don't block users
-    console.error("Rate limit check failed:", e.message);
     return null;
+  } catch (e) {
+    console.error("Rate limit check failed:", e.message);
+    return null; // fail open
   }
 }
 
-module.exports = { checkLimit, translateLimiter, visionLimiter };
+// Keep original checkLimit for any endpoint not yet migrated
+async function checkLimit(limiter, req) {
+  return checkLimitForUser(limiter, limiter, req, null);
+}
+
+module.exports = {
+  checkLimit,
+  checkLimitForUser,
+  translateLimiter,
+  translateLimiterAuth,
+  visionLimiter,
+  visionLimiterAuth,
+};
