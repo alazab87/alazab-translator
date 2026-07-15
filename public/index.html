@@ -1107,19 +1107,35 @@ textarea:focus {
     let translHistory = JSON.parse(localStorage.getItem("alazabHistory")    || "[]");
     let favorites     = JSON.parse(localStorage.getItem("alazabFavorites")  || "[]");
 
-    // ── Translation cache (sessionStorage-backed, max 150 entries) ──
-    const CACHE_MAX = 150;
+    // ── Translation cache (localStorage-backed, max 500 entries, 7-day TTL) ──
+    const CACHE_MAX = 500;
+    const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
     function cacheKey(text, sl, tl, fm, ctx) { return `${sl}|${tl}|${fm}|${ctx||""}|${text}`; }
     const translCache = (function() {
       const map = new Map();
       try {
-        const saved = sessionStorage.getItem("amaTranslCache");
-        if (saved) { const arr = JSON.parse(saved); arr.forEach(([k,v]) => map.set(k,v)); }
+        const saved = localStorage.getItem("amaTranslCache");
+        if (saved) {
+          const now = Date.now();
+          JSON.parse(saved).forEach(([k, v]) => {
+            // Entries written before the TTL existed have no `ts` — treat as fresh.
+            if (!v.ts || now - v.ts < CACHE_TTL_MS) map.set(k, v);
+          });
+        }
       } catch(e) {}
       return map;
     })();
     function persistCache() {
-      try { sessionStorage.setItem("amaTranslCache", JSON.stringify([...translCache])); } catch(e) {}
+      try { localStorage.setItem("amaTranslCache", JSON.stringify([...translCache])); }
+      catch(e) {
+        // Quota exceeded — drop the oldest half and retry once.
+        try {
+          const keep = [...translCache].slice(Math.floor(translCache.size / 2));
+          translCache.clear();
+          keep.forEach(([k, v]) => translCache.set(k, v));
+          localStorage.setItem("amaTranslCache", JSON.stringify(keep));
+        } catch(e2) {}
+      }
     }
 
     // ── UI Language strings ──
@@ -1828,7 +1844,7 @@ textarea:focus {
                 if (isOneWord(text)) showWordCard(text); else hideWordCard();
                 // Store in cache
                 if (translCache.size >= CACHE_MAX) translCache.delete(translCache.keys().next().value);
-                translCache.set(ck, { translation: fullText, romanization: romanResult, detectedLang: detectedResult });
+                translCache.set(ck, { translation: fullText, romanization: romanResult, detectedLang: detectedResult, ts: Date.now() });
                 persistCache();
                 break outer;
               }
@@ -1848,7 +1864,7 @@ textarea:focus {
           trackStat(text, json.translation, _sl, tgtLang);
           if (isOneWord(text)) showWordCard(text); else hideWordCard();
           if (translCache.size >= CACHE_MAX) translCache.delete(translCache.keys().next().value);
-          translCache.set(ck, { translation: json.translation, romanization: json.romanization || null, detectedLang: json.detectedLang || null });
+          translCache.set(ck, { translation: json.translation, romanization: json.romanization || null, detectedLang: json.detectedLang || null, ts: Date.now() });
           persistCache();
         }
 
