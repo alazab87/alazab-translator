@@ -15,7 +15,7 @@ module.exports = async function handler(req, res) {
   if (limited) return res.status(429).json(limited);
   req.userId = userId;
 
-  const { action, nativeLang, learnLang, topic, difficulty, word, userAnswer, correctAnswer } = req.body;
+  const { action, nativeLang, learnLang, topic, difficulty, word, userAnswer, correctAnswer } = req.body || {};
 
   try {
     // ── Generate: 8 flashcards for a topic ─────────────────────────────

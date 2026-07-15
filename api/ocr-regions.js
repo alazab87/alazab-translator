@@ -11,11 +11,11 @@ module.exports = async function handler(req, res) {
 
   const user    = await getUserFromRequest(req);
   const userId  = user?.id || null;
-  const limited = await checkLimitForUser(visionLimiter, visionLimiterAuth, req, userId);
-  if (limited) return res.status(429).json(limited);
+  const limited = await checkLimitForUser(visionLimiter, visionLimiterAuth, req, userId, { failClosed: true });
+  if (limited) return res.status(limited.unavailable ? 503 : 429).json(limited);
   req.userId = userId;
 
-  const { imageBase64, mediaType, tgtLang } = req.body;
+  const { imageBase64, mediaType, tgtLang } = req.body || {};
   if (!imageBase64) return res.status(400).json({ error: "No image provided" });
 
   try {

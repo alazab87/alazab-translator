@@ -1,4 +1,6 @@
 const Anthropic = require("@anthropic-ai/sdk");
+const { checkLimitForUser, lightLimiter, lightLimiterAuth } = require("./_ratelimit");
+const { getUserFromRequest } = require("./_auth");
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -7,8 +9,12 @@ module.exports = async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).end();
 
-  const { word, context, tgtLang } = req.body;
+  const { word, context, tgtLang } = req.body || {};
   if (!word?.trim()) return res.status(400).json({ error: "No word provided" });
+
+  const user    = await getUserFromRequest(req);
+  const limited = await checkLimitForUser(lightLimiter, lightLimiterAuth, req, user?.id || null);
+  if (limited) return res.status(429).json(limited);
 
   try {
     const r = await client.messages.create({

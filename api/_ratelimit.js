@@ -38,6 +38,22 @@ const visionLimiterAuth = new Ratelimit({
   analytics: true,
 });
 
+// Light endpoints (wordcard, alternatives, romanize) — cheap calls, but several can
+// fire per translation, so the ceiling is well above the translate limit on purpose.
+const lightLimiter = new Ratelimit({
+  redis,
+  limiter:   Ratelimit.slidingWindow(120, "1 h"),
+  prefix:    "rl:light:anon",
+  analytics: true,
+});
+
+const lightLimiterAuth = new Ratelimit({
+  redis,
+  limiter:   Ratelimit.slidingWindow(400, "1 h"),
+  prefix:    "rl:light:auth",
+  analytics: true,
+});
+
 function getIp(req) {
   const xff = req.headers["x-forwarded-for"];
   if (xff) {
@@ -54,8 +70,13 @@ function getIp(req) {
 /**
  * Check rate limit using user ID if logged in, otherwise fall back to IP.
  * Pass the anonymous limiter and the authenticated limiter separately.
+ *
+ * opts.failClosed — reject the request if the limiter itself is unreachable.
+ * Off by default: a Redis outage shouldn't take down cheap endpoints. Turn it on
+ * for anything expensive enough that unlimited free calls would hurt (vision, OCR),
+ * where refusing service beats an unbounded Anthropic bill.
  */
-async function checkLimitForUser(anonLimiter, authLimiter, req, userId) {
+async function checkLimitForUser(anonLimiter, authLimiter, req, userId, opts = {}) {
   try {
     const key    = userId ? `user:${userId}` : getIp(req);
     const limiter = userId ? authLimiter : anonLimiter;
@@ -71,6 +92,13 @@ async function checkLimitForUser(anonLimiter, authLimiter, req, userId) {
     return null;
   } catch (e) {
     console.error("Rate limit check failed:", e.message);
+    if (opts.failClosed) {
+      return {
+        error: "Service temporarily unavailable. Please try again in a moment.",
+        retryAfter: 1,
+        unavailable: true,
+      };
+    }
     return null; // fail open
   }
 }
@@ -87,4 +115,6 @@ module.exports = {
   translateLimiterAuth,
   visionLimiter,
   visionLimiterAuth,
+  lightLimiter,
+  lightLimiterAuth,
 };

@@ -1,4 +1,6 @@
 const Anthropic = require("@anthropic-ai/sdk");
+const { checkLimitForUser, visionLimiter, visionLimiterAuth } = require("./_ratelimit");
+const { getUserFromRequest } = require("./_auth");
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -7,8 +9,16 @@ module.exports = async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).end();
 
-  const { imageBase64, mediaType } = req.body;
+  const { imageBase64, mediaType } = req.body || {};
   if (!imageBase64) return res.status(400).json({ error: "No image provided" });
+
+  // Image calls are the most expensive request this app can make, so this endpoint
+  // fails closed: no limiter, no service.
+  const user    = await getUserFromRequest(req);
+  const limited = await checkLimitForUser(
+    visionLimiter, visionLimiterAuth, req, user?.id || null, { failClosed: true }
+  );
+  if (limited) return res.status(limited.unavailable ? 503 : 429).json(limited);
 
   try {
     const r = await client.messages.create({
