@@ -1,5 +1,9 @@
-const CACHE = "alazab-v11";
-const APP_SHELL = ["/", "/index.html", "/icon.svg", "/manifest.json"];
+const CACHE = "alazab-v12";
+const APP_SHELL = [
+  "/", "/index.html", "/manifest.json", "/icon.svg",
+  "/icons/icon-192.png", "/icons/icon-512.png",
+  "/icons/icon-maskable-512.png", "/icons/apple-touch-icon.png",
+];
 
 // Install: cache the app shell
 self.addEventListener("install", e => {

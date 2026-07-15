@@ -9,11 +9,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="MeTranslate" />
-  <link rel="apple-touch-icon" href="/icon.svg" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
   <meta name="description" content="Smart real-time AI translation powered by Claude — 9 languages, voice, camera, and more." />
   <!-- Vercel Web Analytics -->
   <script defer src="/_vercel/insights/script.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- defer: nothing here is needed before first paint, and auth init waits on DOMContentLoaded -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -3372,10 +3374,17 @@ textarea:focus {
     // ════════════════════════════════════════════════════════════════════
     // ── AUTH ────────────────────────────────────────────────────────────
     // ════════════════════════════════════════════════════════════════════
-    (function initAuth() {
+    // The Supabase CDN script is deferred so it can't block first paint, which means
+    // it hasn't executed while this inline script is parsing. Deferred scripts do run
+    // before DOMContentLoaded, so waiting on that guarantees window.supabase exists.
+    function initAuth() {
       const SUPABASE_URL      = "https://xtszjwyxrtcasthysnqt.supabase.co";
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0c3pqd3l4cnRjYXN0aHlzbnF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyODU3MzIsImV4cCI6MjA5NTg2MTczMn0.fgG6kqahVzzF6gYHhDgpWGhQb_RwpopAuIUEfMl4Jc4";
 
+      if (!window.supabase) {
+        console.error("[auth] Supabase library failed to load — sign-in unavailable, translation unaffected");
+        return;
+      }
       const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
       const authBtn      = document.getElementById("authBtn");
@@ -3490,7 +3499,13 @@ textarea:focus {
           authAvatar.style.display = "none";
         }
       }
-    })();
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initAuth);
+    } else {
+      initAuth(); // already past DOMContentLoaded — the deferred script has run
+    }
 
 // ── Ripple effect on buttons ────────────────────────────────────────
 document.addEventListener("click", function(e) {
