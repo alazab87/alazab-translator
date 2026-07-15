@@ -86,8 +86,20 @@ module.exports = async function handler(req, res) {
       // so a partial "<lan" never reaches the user as translated text.
       let pending = autoDetect;
       let buf     = "";
+      // The model puts newlines between </lang> and the translation, and they don't
+      // reliably land in the same token as the tag — so trimming only the remainder
+      // of the tag's own chunk leaves them to slip through on the next one.
+      let trimLeading = autoDetect;
 
-      const emit = t => { translation += t; send({ type: "delta", text: t }); };
+      const emit = t => {
+        if (trimLeading) {
+          t = t.replace(/^\s+/, "");
+          if (!t) return;      // all whitespace so far — keep waiting for real text
+          trimLeading = false;
+        }
+        translation += t;
+        send({ type: "delta", text: t });
+      };
 
       for await (const event of stream) {
         if (event.type !== "content_block_delta" || event.delta.type !== "text_delta") continue;
