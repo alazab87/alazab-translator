@@ -6,24 +6,6 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const ROMANIZE_LANGS = new Set(["Arabic","Chinese","Japanese","Korean","Hindi","Thai","Bengali","Persian","Hebrew"]);
 
-// When the source language is unknown we ask for it inline rather than making a
-// separate detection call first — that call cost a full round-trip (~300-500ms) and
-// blocked the translation, since the translate prompt needed its answer.
-//
-// The tag is parsed defensively: if the model ever ignores the format, the output is
-// treated as a plain translation and we simply don't report a detected language.
-// Non-compliance costs the language badge, never the translation itself.
-const LANG_OPEN  = "<lang>";
-const LANG_CLOSE = "</lang>";
-const LANG_GIVEUP_CHARS = 60; // past this, assume the tag isn't coming
-
-function detectPreamble(tgtLang) {
-  return `First output the source language name in English wrapped in tags exactly like this: ${LANG_OPEN}Spanish${LANG_CLOSE}
-Then immediately output the translation in ${tgtLang}. Do not put anything else between or after them.
-
-`;
-}
-
 // Shared system prompt builder
 function buildSysPrompt(effectiveSrc, tgtLang, formalityNote, contextNote) {
   return `You are a translation engine. Your sole function is to translate text from ${effectiveSrc} to ${tgtLang}.
@@ -70,58 +52,33 @@ module.exports = async function handler(req, res) {
     const send = obj => res.write(`data: ${JSON.stringify(obj)}\n\n`);
 
     try {
-      // One call handles detection and translation together when the source is unknown.
-      const sysPrompt = autoDetect
-        ? detectPreamble(tgtLang) + buildSysPrompt("the source language", tgtLang, formalityNote, contextNote)
-        : buildSysPrompt(srcLang, tgtLang, formalityNote, contextNote);
+      let effectiveSrc = srcLang;
 
+      // Step 1 — Language detection (fast, non-streaming, ≤50 tokens)
+      if (autoDetect) {
+        const r = await client.messages.create({
+          model: "claude-haiku-4-5", max_tokens: 50,
+          system: "Identify the language. Reply with ONLY the language name in English (e.g. 'Spanish'). Nothing else.",
+          messages: [{ role: "user", content: text.slice(0, 300) }],
+        });
+        effectiveSrc = r.content[0].text.trim();
+        send({ type: "detected", lang: effectiveSrc });
+      }
+
+      // Step 2 — Stream translation tokens
       const stream = await client.messages.create({
         model: "claude-haiku-4-5", max_tokens: 1024, stream: true,
-        system: sysPrompt,
+        system: buildSysPrompt(effectiveSrc, tgtLang, formalityNote, contextNote),
         messages: [{ role: "user", content: text }],
       });
 
       let translation = "";
-      // While `pending` is true we hold tokens back looking for the language tag,
-      // so a partial "<lan" never reaches the user as translated text.
-      let pending = autoDetect;
-      let buf     = "";
-      // The model puts newlines between </lang> and the translation, and they don't
-      // reliably land in the same token as the tag — so trimming only the remainder
-      // of the tag's own chunk leaves them to slip through on the next one.
-      let trimLeading = autoDetect;
-
-      const emit = t => {
-        if (trimLeading) {
-          t = t.replace(/^\s+/, "");
-          if (!t) return;      // all whitespace so far — keep waiting for real text
-          trimLeading = false;
-        }
-        translation += t;
-        send({ type: "delta", text: t });
-      };
-
       for await (const event of stream) {
-        if (event.type !== "content_block_delta" || event.delta.type !== "text_delta") continue;
-
-        if (!pending) { emit(event.delta.text); continue; }
-
-        buf += event.delta.text;
-        const close = buf.indexOf(LANG_CLOSE);
-
-        if (close !== -1) {
-          const lang = buf.slice(buf.indexOf(LANG_OPEN) + LANG_OPEN.length, close).trim();
-          if (lang) send({ type: "detected", lang });
-          pending = false;
-          const rest = buf.slice(close + LANG_CLOSE.length).replace(/^\s+/, "");
-          if (rest) emit(rest);
-        } else if (!LANG_OPEN.startsWith(buf.slice(0, LANG_OPEN.length)) || buf.length > LANG_GIVEUP_CHARS) {
-          // Model didn't follow the format — treat everything as translation.
-          pending = false;
-          emit(buf);
+        if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+          translation += event.delta.text;
+          send({ type: "delta", text: event.delta.text });
         }
       }
-      if (pending && buf) emit(buf); // stream ended mid-buffer; don't drop it
 
       // Romanization needs the finished translation, so it can't overlap the stream.
       // It's sent after `done` rather than before it, so the user isn't kept waiting

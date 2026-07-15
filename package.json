@@ -6,8 +6,7 @@
     "icons": "node scripts/build-icons.js",
     "android:sync": "cap sync android",
     "android:open": "cap open android",
-    "extension:package": "node scripts/package-extension.js",
-    "test:langparse": "node scripts/test-langparse.js"
+    "extension:package": "node scripts/package-extension.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
