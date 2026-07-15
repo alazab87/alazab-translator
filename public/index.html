@@ -1750,6 +1750,10 @@ textarea:focus {
       const ck = cacheKey(text, srcLang, tgtLang, formality, contextValue);
       if (translCache.has(ck)) {
         const c = translCache.get(ck);
+        // Re-insert to move this key to the end. Map iterates in insertion order and
+        // eviction takes the first key, so touching on read turns FIFO into LRU —
+        // otherwise a phrase you use constantly still gets dropped on schedule.
+        translCache.delete(ck); translCache.set(ck, c);
         if (c.detectedLang) { detectedLang = c.detectedLang; renderDetectedBadge(); }
         finalizeOutput(c.translation, c.romanization || null);
         outCharCount.textContent = `${c.translation.length} chars`;
@@ -1804,7 +1808,7 @@ textarea:focus {
         if ((res.headers.get("content-type") || "").includes("text/event-stream")) {
           const reader  = res.body.getReader();
           const decoder = new TextDecoder();
-          let buf = "", fullText = "", romanResult = null, detectedResult = null;
+          let buf = "", fullText = "", romanResult = null, detectedResult = null, doneSeen = false;
 
           outer: while (true) {
             const { done, value } = await reader.read();
@@ -1828,13 +1832,21 @@ textarea:focus {
                 outputText.classList.remove("output-shimmer");
                 streamTextNode.textContent = fullText;   // live update
               }
+              // Romanization now arrives *after* "done" so the result isn't held back
+              // waiting on it. Re-render and update the cached entry when it lands.
               if (ev.type === "romanization") {
                 romanResult = ev.text;
+                if (doneSeen) {
+                  finalizeOutput(fullText, romanResult);
+                  const entry = translCache.get(ck);
+                  if (entry) { entry.romanization = romanResult; persistCache(); }
+                }
               }
               if (ev.type === "error") {
                 setOutput(`⚠ ${ev.message}`, false, false); setStatus("error"); break outer;
               }
               if (ev.type === "done") {
+                doneSeen = true;
                 cursorSpan.remove();
                 finalizeOutput(fullText, romanResult);
                 outCharCount.textContent = `${fullText.length} chars`;
@@ -1848,7 +1860,8 @@ textarea:focus {
                 if (translCache.size >= CACHE_MAX) translCache.delete(translCache.keys().next().value);
                 translCache.set(ck, { translation: fullText, romanization: romanResult, detectedLang: detectedResult, ts: Date.now() });
                 persistCache();
-                break outer;
+                // Don't break — romanization may still be inbound. The loop ends on its
+                // own when the server closes the stream (see reader.read() above).
               }
             }
           }
