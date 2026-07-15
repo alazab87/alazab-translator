@@ -1109,6 +1109,11 @@ textarea:focus {
     let translHistory = JSON.parse(localStorage.getItem("alazabHistory")    || "[]");
     let favorites     = JSON.parse(localStorage.getItem("alazabFavorites")  || "[]");
 
+    // In the native app (Capacitor) these files are served by the local webview, so a
+    // relative "/api/..." would resolve to the device and 404. On the web this stays
+    // empty and everything remains same-origin.
+    const API_BASE = window.Capacitor?.isNativePlatform?.() ? "https://amatranslate.app" : "";
+
     // ── Translation cache (localStorage-backed, max 500 entries, 7-day TTL) ──
     const CACHE_MAX = 500;
     const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -1426,7 +1431,7 @@ textarea:focus {
       altPopup.style.left = Math.max(4, Math.min(rect.left, window.innerWidth-164))+"px";
       document.body.appendChild(altPopup);
       try {
-        const res=await fetch("/api/alternatives",{method:"POST",headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},body:JSON.stringify({word:cleanWord,context:currentTranslation,tgtLang:langs[tgtLang].label})});
+        const res=await fetch(API_BASE + "/api/alternatives",{method:"POST",headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},body:JSON.stringify({word:cleanWord,context:currentTranslation,tgtLang:langs[tgtLang].label})});
         const json=await res.json();
         if (!json.alternatives?.length) throw new Error();
         altPopup.innerHTML=`<div class="alt-header">${(uiStrings[currentUiLang]||uiStrings.en).altSwap} "${cleanWord}"</div>`+json.alternatives.map((a,i)=>`<div class="alt-option" data-i="${i}">${escHtml(a)}</div>`).join("");
@@ -1453,7 +1458,7 @@ textarea:focus {
       const romanEl = document.getElementById("romanizationText");
       romanEl.textContent = "🔤 …"; romanEl.style.display = "block";
       try {
-        const res = await fetch("/api/romanize",{method:"POST",headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},body:JSON.stringify({text,lang:langs[tgtLang].label})});
+        const res = await fetch(API_BASE + "/api/romanize",{method:"POST",headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},body:JSON.stringify({text,lang:langs[tgtLang].label})});
         const json = await res.json();
         if (json.romanization) romanEl.textContent = "🔤 "+json.romanization;
       } catch { romanEl.style.display = "none"; }
@@ -1569,7 +1574,7 @@ textarea:focus {
     // Returns a string[] in the same order. Falls back to original phrases on error.
     async function translatePhrases(phrases, targetLangLabel) {
       const numbered = phrases.map((p,i)=>`${i+1}. ${p}`).join("\n");
-      const res = await fetch("/api/translate",{method:"POST",headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},body:JSON.stringify({text:numbered,srcLang:"English",tgtLang:targetLangLabel,formality:"neutral"})});
+      const res = await fetch(API_BASE + "/api/translate",{method:"POST",headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},body:JSON.stringify({text:numbered,srcLang:"English",tgtLang:targetLangLabel,formality:"neutral"})});
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       // Parse numbered lines back
@@ -1701,7 +1706,7 @@ textarea:focus {
       const translations=[];
       for (let i=0;i<chunks.length;i++) {
         setStatus(`Translating ${i+1} of ${chunks.length}…`);
-        const res=await fetch("/api/translate",{method:"POST",headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},body:JSON.stringify({text:chunks[i],srcLang:srcLang==="auto"?"Auto Detect":langs[srcLang].label,tgtLang:langs[tgtLang].label,formality})});
+        const res=await fetch(API_BASE + "/api/translate",{method:"POST",headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},body:JSON.stringify({text:chunks[i],srcLang:srcLang==="auto"?"Auto Detect":langs[srcLang].label,tgtLang:langs[tgtLang].label,formality})});
         const json=await res.json();
         if (json.error) throw new Error(json.error);
         translations.push(json.translation);
@@ -1781,7 +1786,7 @@ textarea:focus {
       outputText.appendChild(cursorSpan);
 
       try {
-        const res = await fetch("/api/translate", {
+        const res = await fetch(API_BASE + "/api/translate", {
           method: "POST",
           headers: { "Content-Type": "application/json", "Accept": "text/event-stream", ...(window._meTranslateToken ? { "Authorization": `Bearer ${window._meTranslateToken}` } : {}) },
           body: JSON.stringify({
@@ -2121,9 +2126,9 @@ textarea:focus {
 
           try {
             const [regRes, txtRes] = await Promise.all([
-              fetch("/api/ocr-regions", { method:"POST", headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},
+              fetch(API_BASE + "/api/ocr-regions", { method:"POST", headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},
                 body: JSON.stringify({ imageBase64: base64, mediaType, tgtLang: langs[tgtLang].label }) }),
-              fetch("/api/vision",      { method:"POST", headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},
+              fetch(API_BASE + "/api/vision",      { method:"POST", headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},
                 body: JSON.stringify({ imageBase64: base64, mediaType }) })
             ]);
 
@@ -2193,7 +2198,7 @@ textarea:focus {
 
       try {
         const sl = srcLang === "auto" ? (detectedLang || "English") : langs[srcLang].label;
-        const res = await fetch("/api/wordcard", {
+        const res = await fetch(API_BASE + "/api/wordcard", {
           method: "POST", headers: {"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},
           body: JSON.stringify({ word, srcLang: sl, tgtLang: langs[tgtLang].label }),
           signal: wcAbort.signal
@@ -2443,7 +2448,7 @@ textarea:focus {
       addConvBubble(msgId, which, text, null, false);
 
       try {
-        const res  = await fetch("/api/translate",{method:"POST",headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},
+        const res  = await fetch(API_BASE + "/api/translate",{method:"POST",headers:{"Content-Type":"application/json",...(window._meTranslateToken?{"Authorization":`Bearer ${window._meTranslateToken}`}:{})},
           body:JSON.stringify({text, srcLang:langs[fromCode].label, tgtLang:langs[toCode].label, formality})});
         const json = await res.json();
         if (json.translation) {
@@ -3056,7 +3061,7 @@ textarea:focus {
     // ── Warmup: wake all serverless functions while user reads the page ──
     (function warmupFunctions() {
       const endpoints = ["/api/translate", "/api/wordcard", "/api/alternatives", "/api/learn"];
-      endpoints.forEach(ep => fetch(ep, { method: "OPTIONS" }).catch(() => {}));
+      endpoints.forEach(ep => fetch(API_BASE + ep, { method: "OPTIONS" }).catch(() => {}));
     })();
 
     // ── Analytics helper ──
@@ -3162,7 +3167,7 @@ textarea:focus {
         updateSessionHeader();
 
         try {
-          const res  = await fetch("/api/learn", {
+          const res  = await fetch(API_BASE + "/api/learn", {
             method: "POST",
             headers: { "Content-Type": "application/json", ...(window._meTranslateToken ? { "Authorization": `Bearer ${window._meTranslateToken}` } : {}) },
             body: JSON.stringify({ action: "generate", nativeLang, learnLang, topic, difficulty })
@@ -3319,7 +3324,7 @@ textarea:focus {
         feedback.style.display = "";
 
         try {
-          const res = await fetch("/api/learn", {
+          const res = await fetch(API_BASE + "/api/learn", {
             method: "POST",
             headers: { "Content-Type": "application/json", ...(window._meTranslateToken ? { "Authorization": `Bearer ${window._meTranslateToken}` } : {}) },
             body: JSON.stringify({

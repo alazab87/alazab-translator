@@ -1,0 +1,14 @@
+{
+  "appId": "app.amatranslate.mobile",
+  "appName": "MeTranslate",
+  "webDir": "public",
+  "backgroundColor": "#0f1117",
+  "android": {
+    "backgroundColor": "#0f1117",
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https",
+    "cleartext": false
+  }
+}

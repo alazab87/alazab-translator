@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Privacy Policy — MeTranslate</title>
+<meta name="description" content="How MeTranslate handles your data." />
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+<style>
+  :root{
+    --bg:#0f1117; --sf:#181b24; --bd:#252838;
+    --t1:#ddd9f0; --t2:#8681a8; --t3:#4e4a68; --ac:#a78bfa;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--t1);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.65;font-size:15px}
+  .wrap{max-width:680px;margin:0 auto;padding:48px 24px 80px}
+  a{color:var(--ac)}
+  header{border-bottom:1px solid var(--bd);padding-bottom:20px;margin-bottom:28px}
+  .back{font-size:13px;color:var(--t2);text-decoration:none;display:inline-block;margin-bottom:16px}
+  .back:hover{color:var(--ac)}
+  h1{font-size:26px;margin-bottom:6px}
+  .updated{font-size:12.5px;color:var(--t3);font-family:Consolas,monospace}
+  h2{font-size:16px;margin:30px 0 8px;color:var(--t1)}
+  p{color:var(--t2);margin-bottom:11px}
+  ul{margin:0 0 11px 20px;color:var(--t2)}
+  li{margin-bottom:6px}
+  strong{color:var(--t1);font-weight:600}
+  .callout{background:var(--sf);border-left:2px solid var(--ac);padding:14px 16px;border-radius:0 4px 4px 0;margin:18px 0}
+  .callout p{margin:0;font-size:14px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:14px 0}
+  th{text-align:left;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);padding:9px 10px;border-bottom:1px solid var(--bd)}
+  td{padding:9px 10px;border-bottom:1px solid var(--bd);color:var(--t2);vertical-align:top}
+  td strong{display:block;margin-bottom:2px}
+  footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--bd);font-size:13px;color:var(--t3)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a href="/" class="back">← Back to MeTranslate</a>
+    <h1>Privacy Policy</h1>
+    <div class="updated">Last updated: 15 July 2026</div>
+  </header>
+
+  <p>This policy covers the MeTranslate website at <strong>amatranslate.app</strong> and the MeTranslate Chrome extension. It describes what the app sends where, in plain terms.</p>
+
+  <div class="callout">
+    <p>MeTranslate does not sell your data, does not show ads, and does not build advertising profiles. Text you translate is sent to Anthropic's API to produce the translation, and is not used to train any model.</p>
+  </div>
+
+  <h2>What we handle</h2>
+  <table>
+    <tbody>
+      <tr>
+        <td><strong>Text you translate</strong>Sent to our server, then to Anthropic's Claude API to generate the translation. Not stored on our server after the response is returned.</td>
+      </tr>
+      <tr>
+        <td><strong>Images you upload for text extraction</strong>Sent to Anthropic's API to read the text in them. Not retained by us after the response.</td>
+      </tr>
+      <tr>
+        <td><strong>Your email address</strong>Only if you create an account. Stored by Supabase, our authentication provider, and used to sign you in. Nothing else.</td>
+      </tr>
+      <tr>
+        <td><strong>Your IP address</strong>Used to enforce rate limits so one visitor can't exhaust the service. Held briefly by Upstash for that purpose and not linked to your translations.</td>
+      </tr>
+      <tr>
+        <td><strong>Anonymous usage counts</strong>Vercel Analytics records page views without cookies and without tracking individuals across sites.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>What stays on your device</h2>
+  <p>Your translation history, saved phrases, cached translations, language choices, theme, and Learn progress are stored in your browser's local storage. They never reach our server. Clearing your browser data deletes them permanently — we hold no copy and cannot restore them.</p>
+
+  <h2>The Chrome extension</h2>
+  <p>The extension runs a content script on the pages you visit so it can see what text you select. This matters, so to be precise about it:</p>
+  <ul>
+    <li>When you select text, it is saved to your browser's session storage on your own machine so the popup can read it. This is local, and it clears when you close your browser.</li>
+    <li>Selected text is <strong>only transmitted</strong> to amatranslate.app when you actually translate it — by opening the popup and pressing Translate, or by using the right-click menu.</li>
+    <li>The extension does not read page content you haven't selected, does not record your browsing history, and does not transmit anything in the background.</li>
+    <li>Its network access is limited to <code>amatranslate.app</code> by the extension's own permissions.</li>
+  </ul>
+
+  <h2>Who else processes your data</h2>
+  <ul>
+    <li><strong>Anthropic</strong> — generates the translations. Per Anthropic's commercial terms, API inputs are not used to train their models. <a href="https://www.anthropic.com/legal/privacy" rel="noopener">Their privacy policy</a>.</li>
+    <li><strong>Vercel</strong> — hosts the site and runs the API. <a href="https://vercel.com/legal/privacy-policy" rel="noopener">Their privacy policy</a>.</li>
+    <li><strong>Supabase</strong> — handles accounts and sign-in. <a href="https://supabase.com/privacy" rel="noopener">Their privacy policy</a>.</li>
+    <li><strong>Upstash</strong> — stores rate-limit counters. <a href="https://upstash.com/trust/privacy.pdf" rel="noopener">Their privacy policy</a>.</li>
+  </ul>
+
+  <h2>Children</h2>
+  <p>MeTranslate is not directed at children under 13, and we do not knowingly collect their personal information.</p>
+
+  <h2>Your choices</h2>
+  <p>You can use MeTranslate without an account. If you have one, you can delete it by contacting us at the address below, and we will remove your account record. To erase everything held locally, clear your browser data for this site or uninstall the extension.</p>
+
+  <h2>Changes</h2>
+  <p>If this policy changes materially, the date at the top will change. Continued use after an update means the revised policy applies.</p>
+
+  <h2>Contact</h2>
+  <p>Questions about this policy or a request to delete your data: <a href="mailto:ahmad.alazab@mcabayarea.org">ahmad.alazab@mcabayarea.org</a></p>
+
+  <footer>MeTranslate · amatranslate.app</footer>
+</div>
+</body>
+</html>

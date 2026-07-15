@@ -1,0 +1,29 @@
+.vercel
+node_modules/
+
+# Capacitor copies public/ in here on every sync — the source of truth is public/
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/cordova.js
+android/app/src/main/assets/cordova_plugins.js
+
+# Android build output
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/.idea/
+android/capacitor-cordova-android-plugins/
+
+# Signing — never commit these. Losing the keystore means you can never
+# update the app on Play again, so back it up somewhere safe and private.
+*.keystore
+*.jks
+keystore.properties
+
+# Chrome Web Store upload bundle — rebuild with scripts/package-extension
+metranslate-extension.zip
+
+# Local Claude Code state
+.claude/settings.local.json
+.claude/worktrees/
