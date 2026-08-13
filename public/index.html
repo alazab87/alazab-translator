@@ -2276,7 +2276,8 @@ textarea:focus {
       updateConvMicUI();
     }
 
-    const CONV_SILENCE_MS = 2500; // ms of silence before committing speech
+    const CONV_SILENCE_MS = 1200; // ms of silence before committing speech (Google's is ~1s;
+                                  // long enough to ride out a mid-sentence pause, short enough to feel live)
     let lastConvTranslation = null; // { text, langCode } — for Repeat button
 
     // ── Smart voice picker ──────────────────────────────────────────────
