@@ -27,16 +27,9 @@ module.exports = async function handler(req, res) {
   const { text, srcLang, tgtLang, formality, context } = req.body || {};
   if (!text?.trim()) return res.status(400).json({ error: "No text provided" });
 
-  // TEMP INSTRUMENTATION — times auth vs rate-limit to find the ~4s overhead.
-  // Reported via Server-Timing so it survives the streaming path. Remove once diagnosed.
-  const _t0 = Date.now();
   const user    = await getUserFromRequest(req);
-  const _tAuth  = Date.now() - _t0;
   const userId  = user?.id || null;
-  const _t1 = Date.now();
   const limited = await checkLimitForUser(translateLimiter, translateLimiterAuth, req, userId);
-  const _tRl = Date.now() - _t1;
-  res.setHeader("Server-Timing", `auth;dur=${_tAuth}, ratelimit;dur=${_tRl}`);
   if (limited) return res.status(429).json(limited);
   req.userId = userId;
 
